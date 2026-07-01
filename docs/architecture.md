@@ -5,6 +5,7 @@ This document details the clean architecture layout and patterns used in ShopFlo
 ## Component Layout
 
 ShopFlow uses standard Clean Architecture:
+
 ```
                        +-------------------+
                        |    HTTP Handlers  | (Delivery Layer)
@@ -30,6 +31,7 @@ ShopFlow uses standard Clean Architecture:
 ```
 
 ## Directory Mapping
+
 - `/cmd/api/main.go`: Application entrypoint. Sets up dependency injection, database connection, Redis client, routes, and starts HTTP server.
 - `/migrations/`: SQL migration files for database schema versioning.
 - `/internal/`: Contains core business logic segregated by domain module:
