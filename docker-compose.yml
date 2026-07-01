@@ -14,12 +14,10 @@ services:
       - DB_USER=postgres
       - DB_PASSWORD=postgres
       - DB_NAME=shopflow
-      - REDIS_ADDR=redis:6379
+      # - REDIS_ADDR=redis:6379 # Redis disabled for now
       - JWT_SECRET=supersecretchangeinprod
     depends_on:
       db:
-        condition: service_healthy
-      redis:
         condition: service_healthy
 
   db:
@@ -38,18 +36,18 @@ services:
       timeout: 5s
       retries: 5
 
-  redis:
-    image: redis:7-alpine
-    ports:
-      - "6379:6379"
-    volumes:
-      - redisdata:/data
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 5s
-      timeout: 5s
-      retries: 5
+  # redis: # Redis disabled for now
+  #   image: redis:7-alpine
+  #   ports:
+  #     - "6379:6379"
+  #   volumes:
+  #     - redisdata:/data
+  #   healthcheck:
+  #     test: ["CMD", "redis-cli", "ping"]
+  #     interval: 5s
+  #     timeout: 5s
+  #     retries: 5
 
 volumes:
   pgdata:
-  redisdata:
+  # redisdata:

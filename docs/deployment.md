@@ -5,8 +5,8 @@ This document describes how to deploy and run ShopFlow locally or in containers.
 ## Prerequisites
 
 - Go 1.22+
-- PostgreSQL
-- Redis
+- PostgreSQL (running locally on your host machine for local dev)
+- Redis (optional, disabled for now)
 - Docker and Docker Compose (recommended)
 
 ## Run Locally (Without Docker)
@@ -16,17 +16,18 @@ This document describes how to deploy and run ShopFlow locally or in containers.
 
    ```env
    PORT=8080
-   DB_HOST=localhost
+   DB_HOST=127.0.0.1
    DB_PORT=5432
    DB_USER=postgres
    DB_PASSWORD=postgres
    DB_NAME=shopflow
-   REDIS_ADDR=localhost:6379
+   DB_SSLMODE=disable
+   # REDIS_ADDR=127.0.0.1:6379 # Redis disabled for now
    JWT_SECRET=supersecretchangeinprod
    ```
 
-2. **Run Postgres & Redis**:
-   Ensure local installations of Postgres and Redis are running.
+2. **Run Postgres**:
+   Ensure a local installation of Postgres is running.
 
 3. **Start the API**:
 
@@ -43,12 +44,12 @@ Use the `migrate` CLI tool (golang-migrate) to apply migrations:
 
 *   **Apply Up Migrations**:
     ```bash
-    migrate -path migrations -database "postgres://postgres:postgres@localhost:5432/shopflow?sslmode=disable" up
+    migrate -path migrations -database "postgres://postgres:postgres@127.0.0.1:5432/shopflow?sslmode=disable" up
     ```
 
 *   **Rollback Down Migrations**:
     ```bash
-    migrate -path migrations -database "postgres://postgres:postgres@localhost:5432/shopflow?sslmode=disable" down
+    migrate -path migrations -database "postgres://postgres:postgres@127.0.0.1:5432/shopflow?sslmode=disable" down
     ```
 
 
@@ -60,4 +61,4 @@ Use the `migrate` CLI tool (golang-migrate) to apply migrations:
    docker-compose up --build
    ```
 
-   This compiles the Go application, pulls Postgres and Redis images, spins them up, and sets up network linkage automatically.
+   This compiles the Go application, pulls Postgres image, spins it up, and sets up network linkage automatically.

@@ -33,8 +33,7 @@ This document defines the detailed functional and non-functional requirements fo
   - Access Control: Requires authentication. Hard delete.
 - **List Products**:
   - Inputs: Query params `page` (default 1) and `limit` (default 10, max 100).
-  - Performance: Fetch from Redis cache first. If cache miss, fetch from DB and write to cache.
-  - Invalidation: Cache is cleared on product create, update, or delete.
+  - Performance: Fetch directly from DB. (Redis caching is optional and disabled for now).
 
 ### 4. Cart Module
 - **Add Product to Cart**:
@@ -76,10 +75,8 @@ This document defines the detailed functional and non-functional requirements fo
 ## Non-Functional Requirements
 
 ### 1. Caching & State Management
-- **Redis Cache-Aside Pattern**:
-  - Caches paginated product lists.
-  - Cache TTL is set to 10 minutes.
-  - Any product creation, update, or deletion must invalidate the cached lists to prevent stale reads.
+- **Caching**:
+  - Disabled for initial phases. Redis cache can be integrated later when requested.
 
 ### 2. Robust Transactions
 - **ACID Order Processing**:
