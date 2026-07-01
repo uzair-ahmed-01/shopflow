@@ -6,8 +6,10 @@ import (
 )
 
 var (
-	ErrUserNotFound      = errors.New("user not found")
+	ErrUserNotFound       = errors.New("user not found")
 	ErrEmailAlreadyExists = errors.New("email already exists")
+	ErrInvalidCredentials = errors.New("invalid email or password")
+	ErrInvalidInput       = errors.New("invalid input data")
 )
 
 // User represents a customer identity in the system.
