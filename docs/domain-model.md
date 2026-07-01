@@ -1,51 +1,92 @@
 # Domain Model
 
-This document defines the domain entities and aggregate roots for ShopFlow.
+This document defines the domain entities, aggregates, properties, business rules, and constraints for ShopFlow.
 
-## Entities
+## Domain Entities
 
 ### User
-- `ID`: Unique identifier (UUID or Auto-increment)
-- `Email`: Unique string
-- `PasswordHash`: Hashed string
-- `Name`: String
-- `CreatedAt`/`UpdatedAt`: Timestamps
+Represents an identity registered on the platform.
+*   **Properties**:
+    *   `ID` (integer): Auto-increment primary key.
+    *   `Name` (string): User's full name. Must be 2-100 characters.
+    *   `Email` (string): Unique email address. Must match RFC 5322 email format.
+    *   `PasswordHash` (string): Secure bcrypt hash. Original password is never stored.
+    *   `CreatedAt` (time.Time): Timestamp of registration.
+    *   `UpdatedAt` (time.Time): Timestamp of last profile update.
+*   **Business Rules**:
+    *   Emails are case-insensitive and converted to lowercase before saving.
+    *   A newly created user is automatically assigned an empty Cart.
 
 ### Category
-- `ID`: Unique identifier
-- `Name`: Unique string
-- `Description`: String
-- `CreatedAt`/`UpdatedAt`: Timestamps
+Represents a group under which products are cataloged.
+*   **Properties**:
+    *   `ID` (integer): Auto-increment primary key.
+    *   `Name` (string): Unique category name. Must be 2-50 characters.
+    *   `Description` (string): Description of products in this category.
+    *   `CreatedAt` (time.Time): Timestamp of creation.
+    *   `UpdatedAt` (time.Time): Timestamp of last metadata update.
+*   **Business Rules**:
+    *   A Category cannot be deleted if there are products assigned to it (referenced integrity).
 
 ### Product
-- `ID`: Unique identifier
-- `CategoryID`: Foreign key to Category
-- `Name`: String
-- `Description`: String
-- `Price`: Decimal/Numeric (stored as cents or fixed-point integer)
-- `Stock`: Integer
-- `CreatedAt`/`UpdatedAt`: Timestamps
+Represents an item available for purchase.
+*   **Properties**:
+    *   `ID` (integer): Auto-increment primary key.
+    *   `CategoryID` (integer): References associated category. Must be valid.
+    *   `Name` (string): Product title. Must be 2-100 characters.
+    *   `Description` (string): Detailed specifications.
+    *   `Price` (integer): Price represented in cents (e.g., $10.99 is stored as `1099`). Must be > 0.
+    *   `Stock` (integer): Number of units physically in stock. Must be >= 0.
+    *   `CreatedAt` (time.Time): Timestamp of creation.
+    *   `UpdatedAt` (time.Time): Timestamp of last catalog update.
+*   **Business Rules**:
+    *   Products must belong to exactly one Category.
+    *   Stock updates must be atomic. Stock cannot go below zero.
 
 ### Cart
-- `ID`: Unique identifier
-- `UserID`: Foreign key to User
-- `Items`: List of CartItem
+Represents the current shopping cart state for a user.
+*   **Properties**:
+    *   `ID` (integer): Auto-increment primary key.
+    *   `UserID` (integer): Unique key referencing the User.
+    *   `Items` ([]CartItem): Collection of items in the cart.
+*   **Business Rules**:
+    *   One cart per User.
+    *   Cart subtotal is calculated as the sum of `Price * Quantity` for all items.
 
 ### CartItem
-- `ProductID`: Foreign key to Product
-- `Quantity`: Integer
+An item quantity in a Cart.
+*   **Properties**:
+    *   `CartID` (integer): References parent Cart.
+    *   `ProductID` (integer): References selected Product.
+    *   `Quantity` (integer): Must be >= 1.
+*   **Business Rules**:
+    *   Adding an item already in the cart increases `Quantity` of the existing record.
+    *   Quantity must not exceed available Product stock at the time of modification.
 
 ### Order
-- `ID`: Unique identifier
-- `UserID`: Foreign key to User
-- `Status`: String (e.g., Pending, Paid, Completed, Cancelled)
-- `TotalAmount`: Decimal/Numeric
-- `Items`: List of OrderItem
-- `CreatedAt`/`UpdatedAt`: Timestamps
+Represents a finalized purchase invoice.
+*   **Properties**:
+    *   `ID` (integer): Auto-increment primary key.
+    *   `UserID` (integer): References User who placed the order.
+    *   `Status` (OrderStatus): State machine (values: `PENDING`, `PAID`, `CANCELLED`).
+    *   `TotalAmount` (integer): Cumulative purchase price of all items in cents.
+    *   `Items` ([]OrderItem): Items snapshot.
+    *   `CreatedAt` (time.Time): Timestamp of placement.
+    *   `UpdatedAt` (time.Time): Timestamp of status transitions.
+*   **OrderStatus Transitions**:
+    ```
+    [PENDING] ----(Payment Success)---> [PAID]
+       |
+       +-------(Payment Failure)-----> [CANCELLED]
+    ```
 
 ### OrderItem
-- `ID`: Unique identifier
-- `OrderID`: Foreign key to Order
-- `ProductID`: Foreign key to Product
-- `Quantity`: Integer
-- `PriceAtPurchase`: Decimal/Numeric
+An immutable historical snapshot of a purchased product inside an Order.
+*   **Properties**:
+    *   `ID` (integer): Auto-increment primary key.
+    *   `OrderID` (integer): References parent Order.
+    *   `ProductID` (integer): References original Product.
+    *   `Quantity` (integer): Must be >= 1.
+    *   `PriceAtPurchase` (integer): Cost in cents at the moment checkout occurred.
+*   **Business Rules**:
+    *   `PriceAtPurchase` is fixed and does not change even if the current product price changes in catalog database.

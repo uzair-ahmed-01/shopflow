@@ -1,19 +1,78 @@
 # Database Design
 
-This document details the database schema design, index choices, and relationships for PostgreSQL.
+This document details the database schema design, index choices, relationships, and contains the Entity Relationship (ER) diagram for PostgreSQL.
 
-## Entity Relationship (ER) Summary
-- **User** 1 --- 1 **Cart**
-- **User** 1 --- N **Order**
-- **Category** 1 --- N **Product**
-- **Cart** 1 --- N **CartItem**
-- **Product** 1 --- N **CartItem**
-- **Order** 1 --- N **OrderItem**
-- **Product** 1 --- N **OrderItem**
+## Entity Relationship (ER) Diagram
 
-## Table Definitions (DDL Sketch)
+```mermaid
+erDiagram
+    users {
+        int id PK
+        string name
+        string email UK "Indexed"
+        string password_hash
+        timestamp created_at
+        timestamp updated_at
+    }
+    categories {
+        int id PK
+        string name UK
+        text description
+        timestamp created_at
+        timestamp updated_at
+    }
+    products {
+        int id PK
+        int category_id FK "Indexed"
+        string name
+        text description
+        int price "Cents"
+        int stock
+        timestamp created_at
+        timestamp updated_at
+    }
+    carts {
+        int id PK
+        int user_id FK "Unique"
+        timestamp created_at
+        timestamp updated_at
+    }
+    cart_items {
+        int cart_id PK,FK
+        int product_id PK,FK
+        int quantity
+    }
+    orders {
+        int id PK
+        int user_id FK "Indexed"
+        string status
+        int total_amount "Cents"
+        timestamp created_at
+        timestamp updated_at
+    }
+    order_items {
+        int id PK
+        int order_id FK "Indexed"
+        int product_id FK
+        int quantity
+        int price_at_purchase "Cents"
+    }
+
+    users ||--|| carts : "has one"
+    users ||--o{ orders : "places"
+    categories ||--o{ products : "contains"
+    carts ||--o{ cart_items : "contains"
+    products ||--o{ cart_items : "added to"
+    orders ||--o{ order_items : "contains"
+    products ||--o{ order_items : "purchased in"
+```
+
+---
+
+## Table Definitions (DDL)
 
 ### Users
+Stores customer authentication and profile details.
 ```sql
 CREATE TABLE users (
     id SERIAL PRIMARY KEY,
@@ -27,6 +86,7 @@ CREATE INDEX idx_users_email ON users(email);
 ```
 
 ### Categories
+Categorizes catalog items.
 ```sql
 CREATE TABLE categories (
     id SERIAL PRIMARY KEY,
@@ -38,14 +98,15 @@ CREATE TABLE categories (
 ```
 
 ### Products
+Stores catalog products and their stock count.
 ```sql
 CREATE TABLE products (
     id SERIAL PRIMARY KEY,
     category_id INTEGER NOT NULL REFERENCES categories(id) ON DELETE RESTRICT,
     name VARCHAR(255) NOT NULL,
     description TEXT,
-    price INT NOT NULL, -- price in cents to avoid floats
-    stock INT NOT NULL DEFAULT 0,
+    price INT NOT NULL CHECK (price > 0), -- Stored in cents
+    stock INT NOT NULL DEFAULT 0 CHECK (stock >= 0),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
@@ -53,6 +114,7 @@ CREATE INDEX idx_products_category_id ON products(category_id);
 ```
 
 ### Carts & Cart Items
+Stores customer's active shopping cart session. A user has exactly one cart.
 ```sql
 CREATE TABLE carts (
     id SERIAL PRIMARY KEY,
@@ -70,12 +132,13 @@ CREATE TABLE cart_items (
 ```
 
 ### Orders & Order Items
+Stores purchase invoice history. Price of products at purchase time is recorded to handle price changes.
 ```sql
 CREATE TABLE orders (
     id SERIAL PRIMARY KEY,
     user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE RESTRICT,
-    status VARCHAR(50) NOT NULL,
-    total_amount INT NOT NULL, -- in cents
+    status VARCHAR(50) NOT NULL, -- e.g., PENDING, PAID, CANCELLED
+    total_amount INT NOT NULL CHECK (total_amount >= 0), -- Stored in cents
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
@@ -86,7 +149,7 @@ CREATE TABLE order_items (
     order_id INTEGER NOT NULL REFERENCES orders(id) ON DELETE CASCADE,
     product_id INTEGER NOT NULL REFERENCES products(id) ON DELETE RESTRICT,
     quantity INTEGER NOT NULL CHECK (quantity > 0),
-    price_at_purchase INTEGER NOT NULL -- in cents
+    price_at_purchase INTEGER NOT NULL CHECK (price_at_purchase > 0) -- Stored in cents
 );
 CREATE INDEX idx_order_items_order_id ON order_items(order_id);
 ```

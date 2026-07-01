@@ -3,9 +3,11 @@
 ShopFlow is a production-style backend showcase demonstrating modern backend engineering concepts using Go.
 
 ## Goal
+
 To implement every major backend concept at least once using clean, production-quality code.
 
 ## Tech Stack
+
 - **Language**: Go
 - **Database**: PostgreSQL
 - **Cache**: Redis
@@ -17,4 +19,5 @@ To implement every major backend concept at least once using clean, production-q
 - **Testing**: Unit Tests, Integration Tests
 
 ## Setup
+
 Refer to [deployment.md](docs/deployment.md) for environment setup and execution instructions.
