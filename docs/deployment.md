@@ -34,6 +34,24 @@ This document describes how to deploy and run ShopFlow locally or in containers.
    go run cmd/api/main.go
    ```
 
+## Database Migrations
+
+Migration files are stored in the `/migrations` directory.
+
+### Running Migrations Manually
+Use the `migrate` CLI tool (golang-migrate) to apply migrations:
+
+*   **Apply Up Migrations**:
+    ```bash
+    migrate -path migrations -database "postgres://postgres:postgres@localhost:5432/shopflow?sslmode=disable" up
+    ```
+
+*   **Rollback Down Migrations**:
+    ```bash
+    migrate -path migrations -database "postgres://postgres:postgres@localhost:5432/shopflow?sslmode=disable" down
+    ```
+
+
 ## Run with Docker Compose
 
 1. **Start all services**:
