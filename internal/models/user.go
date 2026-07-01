@@ -1,6 +1,14 @@
 package models
 
-import "time"
+import (
+	"errors"
+	"time"
+)
+
+var (
+	ErrUserNotFound      = errors.New("user not found")
+	ErrEmailAlreadyExists = errors.New("email already exists")
+)
 
 // User represents a customer identity in the system.
 type User struct {
