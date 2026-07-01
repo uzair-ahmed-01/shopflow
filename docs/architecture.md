@@ -34,13 +34,11 @@ ShopFlow uses standard Clean Architecture:
 
 - `/cmd/api/main.go`: Application entrypoint. Sets up dependency injection, database connection, Redis client, routes, and starts HTTP server.
 - `/migrations/`: SQL migration files for database schema versioning.
-- `/internal/`: Contains core business logic and database entities:
-  - `/internal/models/`: Shared domain model structs (User, Product, Category, etc.) to prevent circular imports.
-  - `/internal/auth/`: Service, repository, and handler for users.
-  - `/internal/product/`: Service, repository, and handler for products.
-  - `/internal/category/`: Service, repository, and handler for categories.
-  - `/internal/cart/`: Service, repository, and handler for carts.
-  - `/internal/order/`: Service, repository, and handler for orders.
+- `/internal/`: Contains core layers and database entities:
+  - `/internal/models/`: Shared domain model structs (User, Product, Category, etc.).
+  - `/internal/repository/`: Shared database repositories (UserRepository, etc.).
+  - `/internal/service/`: Business logic services (AuthService, etc.).
+  - `/internal/handler/`: HTTP handlers (AuthHandler, etc.) for REST API endpoints.
 - `/internal/db/`: DB connection pools, migrations, helper functions.
 - `/internal/middleware/`: JWT authentication validation, logging, recover middlewares.
 - `/internal/cache/`: Redis client and caching wrappers.
