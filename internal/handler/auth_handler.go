@@ -36,21 +36,21 @@ type loginRequest struct {
 func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 	var req registerRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		sendError(w, http.StatusBadRequest, "invalid request body format", "BAD_REQUEST")
+		SendError(w, http.StatusBadRequest, "invalid request body format", "BAD_REQUEST")
 		return
 	}
 
 	user, err := h.authService.Register(r.Context(), req.Name, req.Email, req.Password)
 	if err != nil {
 		if errors.Is(err, models.ErrInvalidInput) {
-			sendError(w, http.StatusBadRequest, err.Error(), "BAD_REQUEST")
+			SendError(w, http.StatusBadRequest, err.Error(), "BAD_REQUEST")
 			return
 		}
 		if errors.Is(err, models.ErrEmailAlreadyExists) {
-			sendError(w, http.StatusConflict, err.Error(), "EMAIL_ALREADY_EXISTS")
+			SendError(w, http.StatusConflict, err.Error(), "EMAIL_ALREADY_EXISTS")
 			return
 		}
-		sendError(w, http.StatusInternalServerError, "failed to register user", "INTERNAL_SERVER_ERROR")
+		SendError(w, http.StatusInternalServerError, "failed to register user", "INTERNAL_SERVER_ERROR")
 		return
 	}
 
@@ -61,24 +61,24 @@ func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 		"created_at": user.CreatedAt,
 	}
 
-	sendJSON(w, http.StatusCreated, response)
+	SendJSON(w, http.StatusCreated, response)
 }
 
 // Login handles POST /api/v1/auth/login requests.
 func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 	var req loginRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		sendError(w, http.StatusBadRequest, "invalid request body format", "BAD_REQUEST")
+		SendError(w, http.StatusBadRequest, "invalid request body format", "BAD_REQUEST")
 		return
 	}
 
 	token, err := h.authService.Login(r.Context(), req.Email, req.Password)
 	if err != nil {
 		if errors.Is(err, models.ErrInvalidCredentials) {
-			sendError(w, http.StatusUnauthorized, err.Error(), "UNAUTHORIZED")
+			SendError(w, http.StatusUnauthorized, err.Error(), "UNAUTHORIZED")
 			return
 		}
-		sendError(w, http.StatusInternalServerError, "failed to authenticate", "INTERNAL_SERVER_ERROR")
+		SendError(w, http.StatusInternalServerError, "failed to authenticate", "INTERNAL_SERVER_ERROR")
 		return
 	}
 
@@ -87,5 +87,5 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 		"expires_in_seconds": 86400, // 24 hours
 	}
 
-	sendJSON(w, http.StatusOK, response)
+	SendJSON(w, http.StatusOK, response)
 }

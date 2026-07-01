@@ -5,8 +5,8 @@ import (
 	"net/http"
 )
 
-// sendJSON sends a success envelope JSON response.
-func sendJSON(w http.ResponseWriter, status int, data any) {
+// SendJSON sends a success envelope JSON response.
+func SendJSON(w http.ResponseWriter, status int, data any) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
 	_ = json.NewEncoder(w).Encode(map[string]any{
@@ -15,8 +15,8 @@ func sendJSON(w http.ResponseWriter, status int, data any) {
 	})
 }
 
-// sendError sends an error envelope JSON response.
-func sendError(w http.ResponseWriter, status int, message string, code string) {
+// SendError sends an error envelope JSON response.
+func SendError(w http.ResponseWriter, status int, message string, code string) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
 	_ = json.NewEncoder(w).Encode(map[string]any{

@@ -14,10 +14,12 @@ import (
 
 type contextKey string
 
-const (
-	userIDKey    contextKey = "userID"
-	userEmailKey contextKey = "userEmail"
-)
+const authUserKey contextKey = "authUser"
+
+type AuthUser struct {
+	ID    int
+	Email string
+}
 
 // AuthMiddleware intercepts requests to validate JWT tokens.
 func AuthMiddleware(cfg *config.Config) func(http.Handler) http.Handler {
@@ -63,9 +65,13 @@ func AuthMiddleware(cfg *config.Config) func(http.Handler) http.Handler {
 				return
 			}
 
+			authUser := &AuthUser{
+				ID:    int(userIDFloat),
+				Email: email,
+			}
+
 			// Inject user info into request context
-			ctx := context.WithValue(r.Context(), userIDKey, int(userIDFloat))
-			ctx = context.WithValue(ctx, userEmailKey, email)
+			ctx := context.WithValue(r.Context(), authUserKey, authUser)
 
 			next.ServeHTTP(w, r.WithContext(ctx))
 		})
@@ -74,12 +80,15 @@ func AuthMiddleware(cfg *config.Config) func(http.Handler) http.Handler {
 
 // GetUserIDFromContext retrieves the authenticated user ID from context.
 func GetUserIDFromContext(ctx context.Context) (int, bool) {
-	val, ok := ctx.Value(userIDKey).(int)
-	return val, ok
+	authUser, ok := GetAuthUser(ctx)
+	if !ok {
+		return 0, false
+	}
+	return authUser.ID, true
 }
 
-// GetUserEmailFromContext retrieves the authenticated user email from context.
-func GetUserEmailFromContext(ctx context.Context) (string, bool) {
-	val, ok := ctx.Value(userEmailKey).(string)
-	return val, ok
+// GetAuthUser retrieves the authenticated AuthUser struct from context.
+func GetAuthUser(ctx context.Context) (*AuthUser, bool) {
+	authUser, ok := ctx.Value(authUserKey).(*AuthUser)
+	return authUser, ok
 }
