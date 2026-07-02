@@ -57,6 +57,10 @@ func main() {
 	cartService := service.NewCartService(cartRepo, productRepo)
 	cartHandler := handler.NewCartHandler(cartService)
 
+	orderRepo := repository.NewOrderRepository(dbPool)
+	orderService := service.NewOrderService(orderRepo, cartRepo, productRepo)
+	orderHandler := handler.NewOrderHandler(orderService)
+
 	// Middleware
 	authMiddleware := middleware.AuthMiddleware(cfg)
 
@@ -81,6 +85,11 @@ func main() {
 	router.Handle("POST /api/v1/cart/items", authMiddleware(http.HandlerFunc(cartHandler.AddOrUpdateItem)))
 	router.Handle("GET /api/v1/cart", authMiddleware(http.HandlerFunc(cartHandler.ViewCart)))
 	router.Handle("DELETE /api/v1/cart/items/{productId}", authMiddleware(http.HandlerFunc(cartHandler.RemoveItem)))
+
+	// Order routes
+	router.Handle("POST /api/v1/orders", authMiddleware(http.HandlerFunc(orderHandler.PlaceOrder)))
+	router.Handle("GET /api/v1/orders", authMiddleware(http.HandlerFunc(orderHandler.ListOrders)))
+	router.Handle("GET /api/v1/orders/{id}", authMiddleware(http.HandlerFunc(orderHandler.GetOrder)))
 
 	// Root/healthcheck handler
 	router.HandleFunc("GET /api/v1/health", func(w http.ResponseWriter, r *http.Request) {
