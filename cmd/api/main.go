@@ -49,6 +49,10 @@ func main() {
 	categoryService := service.NewCategoryService(categoryRepo)
 	categoryHandler := handler.NewCategoryHandler(categoryService)
 
+	productRepo := repository.NewProductRepository(dbPool)
+	productService := service.NewProductService(productRepo, categoryRepo)
+	productHandler := handler.NewProductHandler(productService)
+
 	// Middleware
 	authMiddleware := middleware.AuthMiddleware(cfg)
 
@@ -62,6 +66,12 @@ func main() {
 	// Category routes
 	router.HandleFunc("GET /api/v1/categories", categoryHandler.ListCategories)
 	router.Handle("POST /api/v1/categories", authMiddleware(http.HandlerFunc(categoryHandler.CreateCategory)))
+
+	// Product routes
+	router.HandleFunc("GET /api/v1/products", productHandler.ListProducts)
+	router.Handle("POST /api/v1/products", authMiddleware(http.HandlerFunc(productHandler.CreateProduct)))
+	router.Handle("PUT /api/v1/products/{id}", authMiddleware(http.HandlerFunc(productHandler.UpdateProduct)))
+	router.Handle("DELETE /api/v1/products/{id}", authMiddleware(http.HandlerFunc(productHandler.DeleteProduct)))
 
 	// Root/healthcheck handler
 	router.HandleFunc("GET /api/v1/health", func(w http.ResponseWriter, r *http.Request) {
