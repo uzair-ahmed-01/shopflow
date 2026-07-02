@@ -2,12 +2,12 @@ package middleware
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"strings"
 
 	"shopflow/internal/config"
-	"shopflow/internal/handler"
 
 	"github.com/golang-jwt/jwt/v5"
 )
@@ -27,13 +27,13 @@ func AuthMiddleware(cfg *config.Config) func(http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			authHeader := r.Header.Get("Authorization")
 			if authHeader == "" {
-				handler.SendError(w, http.StatusUnauthorized, "missing authorization header", "UNAUTHORIZED")
+				sendError(w, http.StatusUnauthorized, "missing authorization header", "UNAUTHORIZED")
 				return
 			}
 
 			parts := strings.Split(authHeader, " ")
 			if len(parts) != 2 || strings.ToLower(parts[0]) != "bearer" {
-				handler.SendError(w, http.StatusUnauthorized, "invalid authorization header format", "UNAUTHORIZED")
+				sendError(w, http.StatusUnauthorized, "invalid authorization header format", "UNAUTHORIZED")
 				return
 			}
 
@@ -46,13 +46,13 @@ func AuthMiddleware(cfg *config.Config) func(http.Handler) http.Handler {
 			})
 
 			if err != nil || !token.Valid {
-				handler.SendError(w, http.StatusUnauthorized, "invalid or expired token", "UNAUTHORIZED")
+				sendError(w, http.StatusUnauthorized, "invalid or expired token", "UNAUTHORIZED")
 				return
 			}
 
 			claims, ok := token.Claims.(jwt.MapClaims)
 			if !ok {
-				handler.SendError(w, http.StatusUnauthorized, "invalid token claims", "UNAUTHORIZED")
+				sendError(w, http.StatusUnauthorized, "invalid token claims", "UNAUTHORIZED")
 				return
 			}
 
@@ -61,7 +61,7 @@ func AuthMiddleware(cfg *config.Config) func(http.Handler) http.Handler {
 			email, ok2 := claims["email"].(string)
 
 			if !ok1 || !ok2 {
-				handler.SendError(w, http.StatusUnauthorized, "invalid token payload", "UNAUTHORIZED")
+				sendError(w, http.StatusUnauthorized, "invalid token payload", "UNAUTHORIZED")
 				return
 			}
 
@@ -91,4 +91,17 @@ func GetUserIDFromContext(ctx context.Context) (int, bool) {
 func GetAuthUser(ctx context.Context) (*AuthUser, bool) {
 	authUser, ok := ctx.Value(authUserKey).(*AuthUser)
 	return authUser, ok
+}
+
+// sendError sends an error envelope JSON response directly without depending on internal/handler.
+func sendError(w http.ResponseWriter, status int, message string, code string) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(status)
+	_ = json.NewEncoder(w).Encode(map[string]any{
+		"success": false,
+		"error": map[string]string{
+			"message": message,
+			"code":    code,
+		},
+	})
 }
