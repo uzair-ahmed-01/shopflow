@@ -1,0 +1,17 @@
+info:
+  name: ViewCart
+  type: http
+  seq: 1
+
+http:
+  method: GET
+  url: http://localhost:8080/api/v1/cart
+  auth:
+    type: bearer
+    token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6InV6YWlyQGdtYWlsLmNvbSIsImV4cCI6MTc4MzEwNTYyNSwidXNlcl9pZCI6MX0.SEt3XabCuxj3xnsU0kgsEPqU01iaRIm0yZ_qs-gB2k0
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
