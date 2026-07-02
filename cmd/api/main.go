@@ -14,6 +14,7 @@ import (
 	"shopflow/internal/config"
 	"shopflow/internal/db"
 	"shopflow/internal/handler"
+	"shopflow/internal/middleware"
 	"shopflow/internal/repository"
 	"shopflow/internal/service"
 )
@@ -44,10 +45,23 @@ func main() {
 	authService := service.NewAuthService(userRepo, cfg)
 	authHandler := handler.NewAuthHandler(authService)
 
+	categoryRepo := repository.NewCategoryRepository(dbPool)
+	categoryService := service.NewCategoryService(categoryRepo)
+	categoryHandler := handler.NewCategoryHandler(categoryService)
+
+	// Middleware
+	authMiddleware := middleware.AuthMiddleware(cfg)
+
 	// 4. Set up router and routes
 	router := http.NewServeMux()
+
+	// Registeration and Login routes
 	router.HandleFunc("POST /api/v1/auth/register", authHandler.Register)
 	router.HandleFunc("POST /api/v1/auth/login", authHandler.Login)
+
+	// Category routes
+	router.HandleFunc("GET /api/v1/categories", categoryHandler.ListCategories)
+	router.Handle("POST /api/v1/categories", authMiddleware(http.HandlerFunc(categoryHandler.CreateCategory)))
 
 	// Root/healthcheck handler
 	router.HandleFunc("GET /api/v1/health", func(w http.ResponseWriter, r *http.Request) {
