@@ -10,9 +10,10 @@ var (
 )
 
 const (
-	StatusPending   = "pending"
-	StatusCompleted = "completed"
-	StatusCancelled = "cancelled"
+	StatusPending    = "pending"
+	StatusProcessing = "processing"
+	StatusDelivered  = "delivered"
+	StatusFailed     = "failed"
 )
 
 // Order represents a customer purchase order.

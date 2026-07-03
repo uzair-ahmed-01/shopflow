@@ -15,7 +15,7 @@ type OrderRepository interface {
 	GetOrderByID(ctx context.Context, id, userID int) (*models.Order, error)
 	ListOrdersByUserID(ctx context.Context, userID int) ([]*models.Order, error)
 	ListPendingOrders(ctx context.Context) ([]*models.Order, error)
-	UpdateOrderStatus(ctx context.Context, id int, status string) error
+	UpdateOrderStatus(ctx context.Context, id int, fromStatus, toStatus string) error
 }
 
 type sqlOrderRepository struct {
@@ -178,13 +178,17 @@ func (r *sqlOrderRepository) ListOrdersByUserID(ctx context.Context, userID int)
 	return orders, nil
 }
 
-// ListPendingOrders retrieves all orders with status 'pending'.
+// ListPendingOrders retrieves all orders with status 'pending' that were created more than 10 seconds ago.
+// This ensures that orders are only processed after a cool-off period,
+// preventing race conditions where multiple workers might try to process the same order simultaneously.
+// Only orders that have been in 'pending' status for at least 10 seconds are eligible for processing.
 func (r *sqlOrderRepository) ListPendingOrders(ctx context.Context) ([]*models.Order, error) {
 	query := `
 		SELECT id, user_id, status, total_amount, created_at, updated_at
 		FROM orders
 		WHERE status = $1
-		ORDER BY id ASC
+			AND created_at <= NOW() - INTERVAL '10 seconds'
+		ORDER BY created_at ASC
 	`
 	rows, err := r.db.QueryContext(ctx, query, models.StatusPending)
 	if err != nil {
@@ -210,13 +214,16 @@ func (r *sqlOrderRepository) ListPendingOrders(ctx context.Context) ([]*models.O
 }
 
 // UpdateOrderStatus updates order status in the database.
-func (r *sqlOrderRepository) UpdateOrderStatus(ctx context.Context, id int, status string) error {
+// It atomically changes the order status only if it is currently in the expected state.
+func (r *sqlOrderRepository) UpdateOrderStatus(ctx context.Context, id int, fromStatus string, toStatus string) error {
 	query := `
 		UPDATE orders
-		SET status = $1, updated_at = CURRENT_TIMESTAMP
+		SET status = $1,
+		    updated_at = CURRENT_TIMESTAMP
 		WHERE id = $2
+		  AND status = $3
 	`
-	res, err := r.db.ExecContext(ctx, query, status, id)
+	res, err := r.db.ExecContext(ctx, query, toStatus, id, fromStatus)
 	if err != nil {
 		return fmt.Errorf("failed to update order status: %w", err)
 	}
@@ -226,8 +233,12 @@ func (r *sqlOrderRepository) UpdateOrderStatus(ctx context.Context, id int, stat
 		return fmt.Errorf("failed to check rows affected on status update: %w", err)
 	}
 
+	// No rows updated means either:
+	// - Order was already processed.
+	// - Current state doesn't match expected state.
+	// This is normal in concurrent background processing.
 	if rows == 0 {
-		return models.ErrOrderNotFound
+		return nil
 	}
 
 	return nil
