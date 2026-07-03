@@ -14,6 +14,8 @@ type OrderRepository interface {
 	CreateOrder(ctx context.Context, o *models.Order) error
 	GetOrderByID(ctx context.Context, id, userID int) (*models.Order, error)
 	ListOrdersByUserID(ctx context.Context, userID int) ([]*models.Order, error)
+	ListPendingOrders(ctx context.Context) ([]*models.Order, error)
+	UpdateOrderStatus(ctx context.Context, id int, status string) error
 }
 
 type sqlOrderRepository struct {
@@ -174,4 +176,59 @@ func (r *sqlOrderRepository) ListOrdersByUserID(ctx context.Context, userID int)
 	}
 
 	return orders, nil
+}
+
+// ListPendingOrders retrieves all orders with status 'pending'.
+func (r *sqlOrderRepository) ListPendingOrders(ctx context.Context) ([]*models.Order, error) {
+	query := `
+		SELECT id, user_id, status, total_amount, created_at, updated_at
+		FROM orders
+		WHERE status = $1
+		ORDER BY id ASC
+	`
+	rows, err := r.db.QueryContext(ctx, query, models.StatusPending)
+	if err != nil {
+		return nil, fmt.Errorf("failed to list pending orders: %w", err)
+	}
+	defer rows.Close()
+
+	var orders []*models.Order
+	for rows.Next() {
+		o := &models.Order{Items: []*models.OrderItem{}}
+		err := rows.Scan(&o.ID, &o.UserID, &o.Status, &o.TotalAmount, &o.CreatedAt, &o.UpdatedAt)
+		if err != nil {
+			return nil, fmt.Errorf("failed to scan pending order: %w", err)
+		}
+		orders = append(orders, o)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("error during pending orders scan: %w", err)
+	}
+
+	return orders, nil
+}
+
+// UpdateOrderStatus updates order status in the database.
+func (r *sqlOrderRepository) UpdateOrderStatus(ctx context.Context, id int, status string) error {
+	query := `
+		UPDATE orders
+		SET status = $1, updated_at = CURRENT_TIMESTAMP
+		WHERE id = $2
+	`
+	res, err := r.db.ExecContext(ctx, query, status, id)
+	if err != nil {
+		return fmt.Errorf("failed to update order status: %w", err)
+	}
+
+	rows, err := res.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("failed to check rows affected on status update: %w", err)
+	}
+
+	if rows == 0 {
+		return models.ErrOrderNotFound
+	}
+
+	return nil
 }

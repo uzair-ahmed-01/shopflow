@@ -17,6 +17,7 @@ import (
 	"shopflow/internal/middleware"
 	"shopflow/internal/repository"
 	"shopflow/internal/service"
+	"shopflow/internal/worker"
 )
 
 func main() {
@@ -60,6 +61,13 @@ func main() {
 	orderRepo := repository.NewOrderRepository(dbPool)
 	orderService := service.NewOrderService(orderRepo, cartRepo, productRepo)
 	orderHandler := handler.NewOrderHandler(orderService)
+
+	orderProcessor := worker.NewOrderProcessor(orderRepo, 3) // 3 background workers
+
+	// Create context that can be cancelled during graceful shutdown
+	processorCtx, cancelProcessor := context.WithCancel(context.Background())
+	defer cancelProcessor()
+	orderProcessor.Start(processorCtx)
 
 	// Middleware
 	authMiddleware := middleware.AuthMiddleware(cfg)
@@ -123,6 +131,11 @@ func main() {
 		log.Fatalf("Server error: %v", err)
 	case sig := <-shutdownChan:
 		log.Printf("Received signal %v, shutting down server...", sig)
+
+		// Stop background processor first to stop dispatching new jobs
+		log.Println("Stopping background order processor...")
+		cancelProcessor()
+		orderProcessor.Stop()
 
 		// Create a shutdown context with timeout
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
