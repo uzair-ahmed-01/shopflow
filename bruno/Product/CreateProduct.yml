@@ -11,10 +11,10 @@ http:
     data: |-
       {
           "category_id": 1,
-          "name": "iPhone 15 Pro",
-          "description": "128GB Black Titanium",
-          "price": 99900,
-          "stock": 50
+          "name": "iPhone 16 Pro Max",
+          "description": "512GB Black Titanium",
+          "price": 150000,
+          "stock": 30
       }
   auth:
     type: bearer

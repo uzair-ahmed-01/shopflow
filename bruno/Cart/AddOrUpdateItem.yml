@@ -10,15 +10,16 @@ http:
     type: json
     data: |-
       {
-        "product_id": 4,
-        "quantity": 2
+        "product_id": 5,
+        "quantity": 5
       }
   auth:
     type: bearer
-    token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6InV6YWlyQGdtYWlsLmNvbSIsImV4cCI6MTc4MzEwNTYyNSwidXNlcl9pZCI6MX0.SEt3XabCuxj3xnsU0kgsEPqU01iaRIm0yZ_qs-gB2k0
+    token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6InV6YWlyQGdtYWlsLmNvbSIsImV4cCI6MTc4MzE2NDM0NiwidXNlcl9pZCI6MX0.d4JP6J3XZ1EpcwfGwSpJc9lAcegsNUlMeQ5kWQEu8aM
 
 settings:
   encodeUrl: true
   timeout: 0
   followRedirects: true
   maxRedirects: 5
+​
