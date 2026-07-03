@@ -29,3 +29,6 @@ redisdata/
 # Go module manifests (per user request)
 go.mod
 go.sum
+
+# Bruno collection
+bruno/
