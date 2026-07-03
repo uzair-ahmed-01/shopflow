@@ -6,6 +6,7 @@ import (
 	"sync"
 	"time"
 
+	"shopflow/internal/models"
 	"shopflow/internal/repository"
 )
 
@@ -51,19 +52,27 @@ func (p *OrderProcessor) Stop() {
 	log.Println("Order processor background workers stopped gracefully.")
 }
 
+// Dispatcher Polling for pending orders and enqueue job to process
 func (p *OrderProcessor) dispatcher(ctx context.Context) {
 	defer p.wg.Done()
+
 	ticker := time.NewTicker(10 * time.Second)
 	defer ticker.Stop()
 
 	for {
 		select {
 		case <-ctx.Done():
+			log.Println("[DISPATCHER] Context cancelled. Stopping dispatcher...")
 			return
+
 		case <-p.stopChan:
+			log.Println("[DISPATCHER] Stop signal received. Stopping dispatcher...")
 			return
+
 		case <-ticker.C:
-			// Query PENDING orders from database
+			// Fetch only eligible pending orders.
+			// Repository is responsible for filtering
+			// (e.g. status=PENDING and created_at older than 10 seconds).
 			pendingOrders, err := p.orderRepo.ListPendingOrders(ctx)
 			if err != nil {
 				log.Printf("[DISPATCHER] Error fetching pending orders: %v", err)
@@ -71,17 +80,19 @@ func (p *OrderProcessor) dispatcher(ctx context.Context) {
 			}
 
 			if len(pendingOrders) == 0 {
+				log.Println("[DISPATCHER] No pending orders found.")
 				continue
 			}
 
-			log.Printf("[DISPATCHER] Found %d pending orders to process", len(pendingOrders))
+			log.Printf("[DISPATCHER] Found %d pending orders", len(pendingOrders))
 
-			for _, o := range pendingOrders {
+			for _, order := range pendingOrders {
 				select {
-				case p.jobChan <- o.ID:
-					log.Printf("[DISPATCHER] Enqueued order ID %d", o.ID)
+				case p.jobChan <- order.ID:
+					log.Printf("[DISPATCHER] Enqueued Order #%d", order.ID)
+
 				default:
-					log.Printf("[DISPATCHER] Job queue full, skipping order ID %d", o.ID)
+					log.Printf("[DISPATCHER] Job queue full. Skipping Order #%d", order.ID)
 				}
 			}
 		}
@@ -103,7 +114,7 @@ func (p *OrderProcessor) worker(ctx context.Context, workerID int) {
 			time.Sleep(5 * time.Second)
 
 			// Transition status in DB
-			err := p.orderRepo.UpdateOrderStatus(ctx, orderID, "in_progress")
+			err := p.orderRepo.UpdateOrderStatus(ctx, orderID, models.StatusPending, models.StatusProcessing)
 			if err != nil {
 				log.Printf("[WORKER %d] Failed to transition order ID %d: %v", workerID, orderID, err)
 				continue
