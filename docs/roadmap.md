@@ -12,16 +12,16 @@ This document outlines the milestones and timeline of ShopFlow.
 
 ## Phase 2: Core Modules & Architecture
 
-- [ ] Authentication Module (JWT, Password hashing, Middleware)
-- [ ] Category Module
-- [ ] Product Module & Caching (Redis integration)
-- [ ] Cart Module
-- [ ] Order Module & Events
+- [x] Authentication Module (JWT, Password hashing, Middleware)
+- [x] Category Module
+- [x] Product Module (CRUD, pointer-based partial updates)
+- [x] Cart Module
+- [x] Order Module (Transactional placements, stock verification, cart cleanup)
 
 ## Phase 3: Background Processing & Concurrency
 
-- [ ] Worker pool execution for events (Inventory, notifications, mock email)
-- [ ] Graceful worker shutdowns and cancellation context
+- [x] Worker pool execution for background order status transitions (PENDING -> PROCESSING)
+- [x] Graceful worker shutdowns and cancellation context
 
 ## Phase 4: Containerization & Deployment
 
@@ -32,4 +32,13 @@ This document outlines the milestones and timeline of ShopFlow.
 
 - [ ] Unit testing (Services)
 - [ ] Integration testing (Repositories)
-- [ ] Fill learning-notes.md
+- [x] Fill learning-notes.md
+- [x] Create Go concurrency study guide (go-concurrency-guide.md)
+
+## Phase 6: Future Enhancements & Postponed Modules
+
+- [ ] **Redis Integration**: Cache product details and lists to reduce PostgreSQL query load.
+- [ ] **Event-Driven Architecture**: Publish events like `OrderCreated` to a message broker (RabbitMQ/Redis Pub-Sub).
+- [ ] **Asynchronous Micro-services**: Handle mock email dispatch, push notifications, and analytics in background subscribers.
+- [ ] **Distributed Task Queue**: Upgrade in-memory worker pool to **Asynq** or **River** for multi-server reliability.
+- [ ] **Dockerization**: Complete containerization deployment using Docker Compose.
