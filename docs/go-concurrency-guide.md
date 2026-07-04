@@ -151,3 +151,22 @@ Production backend code shutdown signal receive karte hi database safe status up
 1. **`stopChan := make(chan struct{})`**: Broadcast shutdown signal.
 2. **`close(stopChan)`**: Jo goroutines `<-stopChan` receive kar rahi hain, wo automatically return ho jati hain.
 3. **`wg.Wait()`**: Loop exits safely, resources cleanly released before `main.go` terminates.
+
+---
+
+## 8. Worker Pool Architecture Diagram
+
+Mermaid flowchart representing the background order processor execution pattern:
+
+```mermaid
+graph TD
+    A[Every 10 Seconds] -->|Ticker Trigger| B(Dispatcher / Manager)
+    B -->|Find Pending Orders| C[(PostgreSQL DB)]
+    B -->|Enqueue Job ID| D[Job Queue Buffered Channel]
+    D -->|Worker 1| E1[Worker Goroutine 1]
+    D -->|Worker 2| E2[Worker Goroutine 2]
+    D -->|Worker 3| E3[Worker Goroutine 3]
+    E1 -->|Atomic Status Check & Update| F[(Update Order Status to Processing)]
+    E2 -->|Atomic Status Check & Update| F
+    E3 -->|Atomic Status Check & Update| F
+```
