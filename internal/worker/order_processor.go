@@ -12,20 +12,22 @@ import (
 
 // OrderProcessor coordinates background order status transition workers.
 type OrderProcessor struct {
-	orderRepo  repository.OrderRepository
-	numWorkers int
-	jobChan    chan int
-	stopChan   chan struct{}
-	wg         sync.WaitGroup
+	orderRepo      repository.OrderRepository
+	numWorkers     int
+	jobChan        chan int
+	stopChan       chan struct{}
+	dispatcherDone chan struct{}
+	wg             sync.WaitGroup
 }
 
 // NewOrderProcessor creates a new OrderProcessor instance.
 func NewOrderProcessor(orderRepo repository.OrderRepository, numWorkers int) *OrderProcessor {
 	return &OrderProcessor{
-		orderRepo:  orderRepo,
-		numWorkers: numWorkers,
-		jobChan:    make(chan int, 100),
-		stopChan:   make(chan struct{}),
+		orderRepo:      orderRepo,
+		numWorkers:     numWorkers,
+		jobChan:        make(chan int, 100),
+		stopChan:       make(chan struct{}),
+		dispatcherDone: make(chan struct{}),
 	}
 }
 
@@ -38,7 +40,6 @@ func (p *OrderProcessor) Start(ctx context.Context) {
 	}
 
 	// 2. Start dispatcher loop
-	p.wg.Add(1)
 	go p.dispatcher(ctx)
 
 	log.Printf("Order processor background workers started successfully (workers: %d)", p.numWorkers)
@@ -47,6 +48,7 @@ func (p *OrderProcessor) Start(ctx context.Context) {
 // Stop shuts down dispatcher, closes job queue, and awaits active worker cleanups.
 func (p *OrderProcessor) Stop() {
 	close(p.stopChan)
+	<-p.dispatcherDone
 	close(p.jobChan)
 	p.wg.Wait()
 	log.Println("Order processor background workers stopped gracefully.")
@@ -54,7 +56,7 @@ func (p *OrderProcessor) Stop() {
 
 // Dispatcher Polling for pending orders and enqueue job to process
 func (p *OrderProcessor) dispatcher(ctx context.Context) {
-	defer p.wg.Done()
+	defer close(p.dispatcherDone)
 
 	ticker := time.NewTicker(10 * time.Second)
 	defer ticker.Stop()
