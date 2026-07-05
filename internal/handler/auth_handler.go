@@ -31,6 +31,10 @@ type loginRequest struct {
 	Password string `json:"password"`
 }
 
+type refreshTokenRequest struct {
+	RefreshToken string `json:"refresh_token"`
+}
+
 // Register handles POST /api/v1/auth/register requests.
 func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 	req, ok := DecodeJSON[registerRequest](w, r)
@@ -69,7 +73,7 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	token, err := h.authService.Login(r.Context(), req.Email, req.Password)
+	accessToken, refreshToken, err := h.authService.Login(r.Context(), req.Email, req.Password)
 	if err != nil {
 		if errors.Is(err, models.ErrInvalidCredentials) {
 			SendError(w, http.StatusUnauthorized, err.Error(), "UNAUTHORIZED")
@@ -80,9 +84,66 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 	}
 
 	response := map[string]any{
-		"token":              token,
-		"expires_in_seconds": 86400, // 24 hours
+		"access_token":       accessToken,
+		"refresh_token":      refreshToken,
+		"expires_in_seconds": 900, // 15 minutes
 	}
 
 	SendJSON(w, http.StatusOK, response)
+}
+
+// Refresh handles POST /api/v1/auth/refresh requests.
+func (h *AuthHandler) Refresh(w http.ResponseWriter, r *http.Request) {
+	req, ok := DecodeJSON[refreshTokenRequest](w, r)
+	if !ok {
+		return
+	}
+
+	if req.RefreshToken == "" {
+		SendError(w, http.StatusBadRequest, "refresh token is required", "BAD_REQUEST")
+		return
+	}
+
+	newAccessToken, newRefreshToken, err := h.authService.RefreshToken(r.Context(), req.RefreshToken)
+	if err != nil {
+		if errors.Is(err, models.ErrInvalidToken) || errors.Is(err, models.ErrUserNotFound) {
+			SendError(w, http.StatusBadRequest, err.Error(), "INVALID_TOKEN")
+			return
+		}
+		SendError(w, http.StatusInternalServerError, "failed to refresh token", "INTERNAL_SERVER_ERROR")
+		return
+	}
+
+	response := map[string]any{
+		"access_token":       newAccessToken,
+		"refresh_token":      newRefreshToken,
+		"expires_in_seconds": 900, // 15 minutes
+	}
+
+	SendJSON(w, http.StatusOK, response)
+}
+
+// Logout handles POST /api/v1/auth/logout requests.
+func (h *AuthHandler) Logout(w http.ResponseWriter, r *http.Request) {
+	req, ok := DecodeJSON[refreshTokenRequest](w, r)
+	if !ok {
+		return
+	}
+
+	if req.RefreshToken == "" {
+		SendError(w, http.StatusBadRequest, "refresh token is required", "BAD_REQUEST")
+		return
+	}
+
+	err := h.authService.Logout(r.Context(), req.RefreshToken)
+	if err != nil {
+		if errors.Is(err, models.ErrInvalidToken) {
+			SendError(w, http.StatusBadRequest, err.Error(), "INVALID_TOKEN")
+			return
+		}
+		SendError(w, http.StatusInternalServerError, "failed to logout", "INTERNAL_SERVER_ERROR")
+		return
+	}
+
+	SendJSON(w, http.StatusOK, map[string]string{"message": "successfully logged out"})
 }

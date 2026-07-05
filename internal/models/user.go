@@ -10,6 +10,7 @@ var (
 	ErrEmailAlreadyExists = errors.New("email already exists")
 	ErrInvalidCredentials = errors.New("invalid email or password")
 	ErrInvalidInput       = errors.New("invalid input data")
+	ErrInvalidToken       = errors.New("invalid or expired token")
 )
 
 // User represents a customer identity in the system.
@@ -20,4 +21,14 @@ type User struct {
 	PasswordHash string    `json:"-"` // Omitted from JSON serialization for security
 	CreatedAt    time.Time `json:"created_at"`
 	UpdatedAt    time.Time `json:"updated_at"`
+}
+
+// RefreshToken represents a database record to manage session rotation.
+type RefreshToken struct {
+	ID        int        `json:"id"`
+	UserID    int        `json:"user_id"`
+	Token     string     `json:"token"`
+	ExpiresAt time.Time  `json:"expires_at"`
+	CreatedAt time.Time  `json:"created_at"`
+	RevokedAt *time.Time `json:"revoked_at,omitempty"`
 }

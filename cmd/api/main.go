@@ -78,6 +78,8 @@ func main() {
 	// Registeration and Login routes
 	router.HandleFunc("POST /api/v1/auth/register", authHandler.Register)
 	router.HandleFunc("POST /api/v1/auth/login", authHandler.Login)
+	router.HandleFunc("POST /api/v1/auth/refresh", authHandler.Refresh)
+	router.HandleFunc("POST /api/v1/auth/logout", authHandler.Logout)
 
 	// Category routes
 	router.HandleFunc("GET /api/v1/categories", categoryHandler.ListCategories)

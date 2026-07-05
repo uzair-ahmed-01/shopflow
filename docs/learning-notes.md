@@ -41,6 +41,21 @@ Graceful shutdown prevents data corruption by ensuring active tasks finish befor
 5. Once the job channel is drained, workers exit, decrementing the `WaitGroup`.
 6. Main thread finishes `wg.Wait()` and closes DB connections cleanly.
 
+## JWT Refresh Token Lifecycle & Revocation
+
+### 1. The Need for Refresh Tokens
+JWT access tokens are stateless and self-contained. Once signed, they cannot be easily revoked before expiration. 
+- **Security Strategy**: We shorten the access token lifetime (e.g., 15 minutes) and issue a long-lived **Refresh Token** (e.g., 7 days) persisted in the database.
+- **Revocation**: If a user logs out or a token is compromised, the refresh token is marked as `revoked_at` in the database, locking out further access token renewals.
+
+### 2. Token Rotation (Replay Protection)
+To prevent stolen refresh tokens from being reused indefinitely:
+- Every time a client requests a new access token via `POST /api/v1/auth/refresh`, the old refresh token is **invalidated (revoked)** and a **new refresh token** is generated and returned (rotated).
+- **Concurrency Protection**: We use atomic database updates (`SET revoked_at = NOW() WHERE token = ? AND revoked_at IS NULL`) so if multiple simultaneous requests attempt to reuse the same refresh token, only the first one succeeds.
+
+### 3. Session Revocation (Logout)
+- `POST /api/v1/auth/logout` invalidates the active refresh token session by writing the `revoked_at` timestamp. Future refresh calls using that token will fail.
+
 ## Redis Caching
 
 - TBD
