@@ -19,6 +19,7 @@ const authUserKey contextKey = "authUser"
 type AuthUser struct {
 	ID    int
 	Email string
+	Role  string
 }
 
 // AuthMiddleware intercepts requests to validate JWT tokens.
@@ -59,8 +60,9 @@ func AuthMiddleware(cfg *config.Config) func(http.Handler) http.Handler {
 			// Extract claims
 			userIDFloat, ok1 := claims["user_id"].(float64)
 			email, ok2 := claims["email"].(string)
+			role, ok3 := claims["role"].(string)
 
-			if !ok1 || !ok2 {
+			if !ok1 || !ok2 || !ok3 {
 				sendError(w, http.StatusUnauthorized, "invalid token payload", "UNAUTHORIZED")
 				return
 			}
@@ -68,12 +70,41 @@ func AuthMiddleware(cfg *config.Config) func(http.Handler) http.Handler {
 			authUser := &AuthUser{
 				ID:    int(userIDFloat),
 				Email: email,
+				Role:  role,
 			}
 
 			// Inject user info into request context
 			ctx := context.WithValue(r.Context(), authUserKey, authUser)
 
 			next.ServeHTTP(w, r.WithContext(ctx))
+		})
+	}
+}
+
+// RequireRole checks if the authenticated user possesses one of the allowed roles.
+func RequireRole(allowedRoles ...string) func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			authUser, ok := GetAuthUser(r.Context())
+			if !ok {
+				sendError(w, http.StatusUnauthorized, "unauthorized", "UNAUTHORIZED")
+				return
+			}
+
+			roleAllowed := false
+			for _, allowed := range allowedRoles {
+				if authUser.Role == allowed {
+					roleAllowed = true
+					break
+				}
+			}
+
+			if !roleAllowed {
+				sendError(w, http.StatusForbidden, "forbidden: insufficient permissions", "FORBIDDEN")
+				return
+			}
+
+			next.ServeHTTP(w, r)
 		})
 	}
 }

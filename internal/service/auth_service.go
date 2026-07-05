@@ -64,6 +64,7 @@ func (s *authService) Register(ctx context.Context, name, email, password string
 		Name:         name,
 		Email:        email,
 		PasswordHash: string(hashedPassword),
+		Role:         models.RoleCustomer,
 	}
 
 	if err := s.repo.CreateUser(ctx, user); err != nil {
@@ -97,7 +98,7 @@ func (s *authService) Login(ctx context.Context, email, password string) (string
 	}
 
 	// Generate access token (expiring in 15 minutes)
-	accessToken, err := s.generateAccessToken(user.ID, user.Email)
+	accessToken, err := s.generateAccessToken(user.ID, user.Email, user.Role)
 	if err != nil {
 		return "", "", err
 	}
@@ -139,7 +140,7 @@ func (s *authService) RefreshToken(ctx context.Context, token string) (string, s
 	}
 
 	// Generate new access token
-	newAccessToken, err := s.generateAccessToken(user.ID, user.Email)
+	newAccessToken, err := s.generateAccessToken(user.ID, user.Email, user.Role)
 	if err != nil {
 		return "", "", err
 	}
@@ -159,10 +160,11 @@ func (s *authService) Logout(ctx context.Context, token string) error {
 }
 
 // generateAccessToken creates a standard short-lived signed JWT.
-func (s *authService) generateAccessToken(userID int, email string) (string, error) {
+func (s *authService) generateAccessToken(userID int, email, role string) (string, error) {
 	claims := jwt.MapClaims{
 		"user_id": userID,
 		"email":   email,
+		"role":    role,
 		"exp":     time.Now().Add(15 * time.Minute).Unix(),
 	}
 

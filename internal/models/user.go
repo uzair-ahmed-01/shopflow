@@ -13,12 +13,18 @@ var (
 	ErrInvalidToken       = errors.New("invalid or expired token")
 )
 
+const (
+	RoleCustomer = "customer"
+	RoleAdmin    = "admin"
+)
+
 // User represents a customer identity in the system.
 type User struct {
 	ID           int       `json:"id"`
 	Name         string    `json:"name"`
 	Email        string    `json:"email"`
 	PasswordHash string    `json:"-"` // Omitted from JSON serialization for security
+	Role         string    `json:"role"`
 	CreatedAt    time.Time `json:"created_at"`
 	UpdatedAt    time.Time `json:"updated_at"`
 }

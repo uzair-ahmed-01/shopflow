@@ -15,6 +15,7 @@ import (
 	"shopflow/internal/db"
 	"shopflow/internal/handler"
 	"shopflow/internal/middleware"
+	"shopflow/internal/models"
 	"shopflow/internal/repository"
 	"shopflow/internal/service"
 	"shopflow/internal/worker"
@@ -71,6 +72,7 @@ func main() {
 
 	// Middleware
 	authMiddleware := middleware.AuthMiddleware(cfg)
+	adminMiddleware := middleware.RequireRole(models.RoleAdmin)
 
 	// 4. Set up router and routes
 	router := http.NewServeMux()
@@ -83,13 +85,13 @@ func main() {
 
 	// Category routes
 	router.HandleFunc("GET /api/v1/categories", categoryHandler.ListCategories)
-	router.Handle("POST /api/v1/categories", authMiddleware(http.HandlerFunc(categoryHandler.CreateCategory)))
+	router.Handle("POST /api/v1/categories", authMiddleware(adminMiddleware(http.HandlerFunc(categoryHandler.CreateCategory))))
 
 	// Product routes
 	router.HandleFunc("GET /api/v1/products", productHandler.ListProducts)
-	router.Handle("POST /api/v1/products", authMiddleware(http.HandlerFunc(productHandler.CreateProduct)))
-	router.Handle("PUT /api/v1/products/{id}", authMiddleware(http.HandlerFunc(productHandler.UpdateProduct)))
-	router.Handle("DELETE /api/v1/products/{id}", authMiddleware(http.HandlerFunc(productHandler.DeleteProduct)))
+	router.Handle("POST /api/v1/products", authMiddleware(adminMiddleware(http.HandlerFunc(productHandler.CreateProduct))))
+	router.Handle("PUT /api/v1/products/{id}", authMiddleware(adminMiddleware(http.HandlerFunc(productHandler.UpdateProduct))))
+	router.Handle("DELETE /api/v1/products/{id}", authMiddleware(adminMiddleware(http.HandlerFunc(productHandler.DeleteProduct))))
 
 	// Cart routes
 	router.Handle("POST /api/v1/cart/items", authMiddleware(http.HandlerFunc(cartHandler.AddOrUpdateItem)))

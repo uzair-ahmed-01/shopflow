@@ -56,6 +56,25 @@ To prevent stolen refresh tokens from being reused indefinitely:
 ### 3. Session Revocation (Logout)
 - `POST /api/v1/auth/logout` invalidates the active refresh token session by writing the `revoked_at` timestamp. Future refresh calls using that token will fail.
 
+## Role-Based Access Control (RBAC)
+
+### 1. Authentication vs. Authorization
+- **Authentication**: Establishes *who* the user is (JWT validation in `AuthMiddleware`).
+- **Authorization**: Establishes *what* the user is allowed to do (RBAC verification in `RequireRole` middleware).
+
+### 2. JWT Role Claims
+- The user's role (e.g. `customer` or `admin`) is added to the database `users` table and encoded directly inside the JWT access token claims. This avoids querying the database on every HTTP request to resolve permissions, maintaining high performance.
+
+### 3. Middleware Chaining
+To secure administrative operations without bloating route handlers, we wrap handlers using a functional middleware chain:
+```go
+router.Handle("POST /api/v1/products", authMiddleware(adminMiddleware(http.HandlerFunc(handler))))
+```
+- **Execution Flow**:
+  1. `AuthMiddleware` verifies JWT and injects `AuthUser` struct into context.
+  2. `RequireRole("admin")` retrieves `AuthUser` from context, reads the role, and returns `403 Forbidden` if role constraints are not met.
+  3. Target handler executes safely.
+
 ## Redis Caching
 
 - TBD

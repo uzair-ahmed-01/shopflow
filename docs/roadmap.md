@@ -12,7 +12,7 @@ This document outlines the milestones and timeline of ShopFlow.
 
 ## Phase 2: Core Modules & Architecture
 
-- [x] Authentication Module (JWT, Password hashing, Middleware, Refresh Tokens, Logout Revocation)
+- [x] Authentication Module (JWT, Password hashing, Middleware, Refresh Tokens, Logout Revocation, RBAC Authorization)
 - [x] Category Module
 - [x] Product Module (CRUD, pointer-based partial updates)
 - [x] Cart Module

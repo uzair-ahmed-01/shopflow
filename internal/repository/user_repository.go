@@ -34,12 +34,12 @@ func NewUserRepository(db *sql.DB) UserRepository {
 // CreateUser inserts a user into the database.
 func (r *sqlUserRepository) CreateUser(ctx context.Context, u *models.User) error {
 	query := `
-		INSERT INTO users (name, email, password_hash)
-		VALUES ($1, $2, $3)
-		RETURNING id, created_at, updated_at
+		INSERT INTO users (name, email, password_hash, role)
+		VALUES ($1, $2, $3, $4)
+		RETURNING id, role, created_at, updated_at
 	`
-	err := r.db.QueryRowContext(ctx, query, u.Name, strings.ToLower(u.Email), u.PasswordHash).
-		Scan(&u.ID, &u.CreatedAt, &u.UpdatedAt)
+	err := r.db.QueryRowContext(ctx, query, u.Name, strings.ToLower(u.Email), u.PasswordHash, u.Role).
+		Scan(&u.ID, &u.Role, &u.CreatedAt, &u.UpdatedAt)
 
 	if err != nil {
 		if strings.Contains(err.Error(), "unique constraint") || strings.Contains(err.Error(), "duplicate key value") {
@@ -54,13 +54,13 @@ func (r *sqlUserRepository) CreateUser(ctx context.Context, u *models.User) erro
 // GetUserByEmail retrieves a user by their email address.
 func (r *sqlUserRepository) GetUserByEmail(ctx context.Context, email string) (*models.User, error) {
 	query := `
-		SELECT id, name, email, password_hash, created_at, updated_at
+		SELECT id, name, email, password_hash, role, created_at, updated_at
 		FROM users
 		WHERE email = $1
 	`
 	u := &models.User{}
 	err := r.db.QueryRowContext(ctx, query, strings.ToLower(email)).
-		Scan(&u.ID, &u.Name, &u.Email, &u.PasswordHash, &u.CreatedAt, &u.UpdatedAt)
+		Scan(&u.ID, &u.Name, &u.Email, &u.PasswordHash, &u.Role, &u.CreatedAt, &u.UpdatedAt)
 
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
@@ -75,13 +75,13 @@ func (r *sqlUserRepository) GetUserByEmail(ctx context.Context, email string) (*
 // GetUserByID retrieves a user by their user ID.
 func (r *sqlUserRepository) GetUserByID(ctx context.Context, id int) (*models.User, error) {
 	query := `
-		SELECT id, name, email, password_hash, created_at, updated_at
+		SELECT id, name, email, password_hash, role, created_at, updated_at
 		FROM users
 		WHERE id = $1
 	`
 	u := &models.User{}
 	err := r.db.QueryRowContext(ctx, query, id).
-		Scan(&u.ID, &u.Name, &u.Email, &u.PasswordHash, &u.CreatedAt, &u.UpdatedAt)
+		Scan(&u.ID, &u.Name, &u.Email, &u.PasswordHash, &u.Role, &u.CreatedAt, &u.UpdatedAt)
 
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
