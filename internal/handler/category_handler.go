@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"encoding/json"
 	"errors"
 	"net/http"
 
@@ -26,9 +25,8 @@ type createCategoryRequest struct {
 
 // CreateCategory handles POST /api/v1/categories.
 func (h *CategoryHandler) CreateCategory(w http.ResponseWriter, r *http.Request) {
-	var req createCategoryRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		SendError(w, http.StatusBadRequest, "invalid request body format", "BAD_REQUEST")
+	req, ok := DecodeJSON[createCategoryRequest](w, r)
+	if !ok {
 		return
 	}
 

@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"encoding/json"
 	"errors"
 	"net/http"
 	"strconv"
@@ -38,9 +37,8 @@ type updateProductRequest struct {
 
 // CreateProduct handles POST /api/v1/products.
 func (h *ProductHandler) CreateProduct(w http.ResponseWriter, r *http.Request) {
-	var req createProductRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		SendError(w, http.StatusBadRequest, "invalid request body format", "BAD_REQUEST")
+	req, ok := DecodeJSON[createProductRequest](w, r)
+	if !ok {
 		return
 	}
 
@@ -66,9 +64,8 @@ func (h *ProductHandler) UpdateProduct(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var req updateProductRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		SendError(w, http.StatusBadRequest, "invalid request body format", "BAD_REQUEST")
+	req, ok := DecodeJSON[updateProductRequest](w, r)
+	if !ok {
 		return
 	}
 

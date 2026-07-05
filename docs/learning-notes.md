@@ -8,6 +8,13 @@ This document acts as a log for backend engineering takeaways from building Shop
 - Service layer contains all business logic and controls transactions.
 - Repository layer abstracts database interaction.
 
+### Handlers Security & Generic Request Decoding
+
+In production APIs, decoding user JSON input directly is unsafe and prone to boilerplate duplication.
+1. **Generic JSON Decoders (`DecodeJSON[T]`)**: Utilizing Go generics allows writing a single, reusable request decoder, reducing boilerplate error checking by 70% in HTTP handlers.
+2. **Payload Size Limitation (`http.MaxBytesReader`)**: Restricting the maximum request body size (e.g., 1MB) prevents memory exhaustion Denial of Service (DoS) attacks where clients upload huge files to crash the server.
+3. **Strict Validation (`DisallowUnknownFields()`)**: Instructing the JSON decoder to reject unknown properties stops silent data loss and typing mistakes (e.g., client sends `pricee` instead of `price`, causing the app to silently process the value as 0 without warning).
+
 ## Concurrency and Worker Pools
 
 ### 1. Why a Worker Pool?

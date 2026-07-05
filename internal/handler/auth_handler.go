@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"encoding/json"
 	"errors"
 	"net/http"
 
@@ -34,9 +33,8 @@ type loginRequest struct {
 
 // Register handles POST /api/v1/auth/register requests.
 func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
-	var req registerRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		SendError(w, http.StatusBadRequest, "invalid request body format", "BAD_REQUEST")
+	req, ok := DecodeJSON[registerRequest](w, r)
+	if !ok {
 		return
 	}
 
@@ -66,9 +64,8 @@ func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 
 // Login handles POST /api/v1/auth/login requests.
 func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
-	var req loginRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		SendError(w, http.StatusBadRequest, "invalid request body format", "BAD_REQUEST")
+	req, ok := DecodeJSON[loginRequest](w, r)
+	if !ok {
 		return
 	}
 

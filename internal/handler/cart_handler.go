@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"encoding/json"
 	"errors"
 	"net/http"
 	"strconv"
@@ -34,9 +33,8 @@ func (h *CartHandler) AddOrUpdateItem(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var req addCartItemRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		SendError(w, http.StatusBadRequest, "invalid request body format", "BAD_REQUEST")
+	req, ok := DecodeJSON[addCartItemRequest](w, r)
+	if !ok {
 		return
 	}
 
