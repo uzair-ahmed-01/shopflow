@@ -11,11 +11,13 @@ Represents an identity registered on the platform.
     *   `Name` (string): User's full name. Must be 2-100 characters.
     *   `Email` (string): Unique email address. Must match RFC 5322 email format.
     *   `PasswordHash` (string): Secure bcrypt hash. Original password is never stored.
+    *   `Role` (string): Permission tier (`customer` or `admin`). Default: `customer`.
     *   `CreatedAt` (time.Time): Timestamp of registration.
     *   `UpdatedAt` (time.Time): Timestamp of last profile update.
 *   **Business Rules**:
     *   Emails are case-insensitive and converted to lowercase before saving.
     *   A newly created user is automatically assigned an empty Cart.
+    *   Roles regulate administrative API endpoint clearance (RBAC authorization).
 
 ### Category
 Represents a group under which products are cataloged.
@@ -90,3 +92,16 @@ An immutable historical snapshot of a purchased product inside an Order.
     *   `PriceAtPurchase` (integer): Cost in cents at the moment checkout occurred.
 *   **Business Rules**:
     *   `PriceAtPurchase` is fixed and does not change even if the current product price changes in catalog database.
+
+### RefreshToken
+Represents a token used to maintain user authentication sessions.
+*   **Properties**:
+    *   `ID` (integer): Auto-increment primary key.
+    *   `UserID` (integer): References the User who owns the session.
+    *   `Token` (string): Cryptographically secure random 32-byte hex token.
+    *   `ExpiresAt` (time.Time): Absolute time boundary when token becomes invalid.
+    *   `CreatedAt` (time.Time): Timestamp of token generation.
+    *   `RevokedAt` (*time.Time): Optional timestamp indicating manual logout or session revocation.
+*   **Business Rules**:
+    *   A RefreshToken is invalid if `ExpiresAt` is in the past, or if `RevokedAt` is populated.
+    *   Used refresh tokens are rotated during token refresh requests.

@@ -72,8 +72,49 @@ Returned when validation fails, permissions are lacking, or resources are missin
     {
       "success": true,
       "data": {
-        "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
-        "expires_in_seconds": 86400
+        "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+        "refresh_token": "8dfa27a8106f0e4b85c3b123...",
+        "expires_in_seconds": 900
+      }
+    }
+    ```
+
+### 3. Refresh Access Token
+*   **Path**: `POST /api/v1/auth/refresh`
+*   **Authentication**: None (Requires valid active refresh token in payload)
+*   **Request Body**:
+    ```json
+    {
+      "refresh_token": "8dfa27a8106f0e4b85c3b123..."
+    }
+    ```
+*   **Success Response**: `200 OK`
+    ```json
+    {
+      "success": true,
+      "data": {
+        "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+        "refresh_token": "92ea81c2f901ab8872bca532...",
+        "expires_in_seconds": 900
+      }
+    }
+    ```
+
+### 4. Logout User
+*   **Path**: `POST /api/v1/auth/logout`
+*   **Authentication**: None (Requires active refresh token in payload to invalidate session)
+*   **Request Body**:
+    ```json
+    {
+      "refresh_token": "8dfa27a8106f0e4b85c3b123..."
+    }
+    ```
+*   **Success Response**: `200 OK`
+    ```json
+    {
+      "success": true,
+      "data": {
+        "message": "successfully logged out"
       }
     }
     ```
@@ -84,7 +125,7 @@ Returned when validation fails, permissions are lacking, or resources are missin
 
 ### 1. Create Category
 *   **Path**: `POST /api/v1/categories`
-*   **Headers**: `Authorization: Bearer <token>`
+*   **Headers**: `Authorization: Bearer <token>` (Requires **Admin** role)
 *   **Request Body**:
     ```json
     {
@@ -127,7 +168,7 @@ Returned when validation fails, permissions are lacking, or resources are missin
 
 ### 1. Create Product
 *   **Path**: `POST /api/v1/products`
-*   **Headers**: `Authorization: Bearer <token>`
+*   **Headers**: `Authorization: Bearer <token>` (Requires **Admin** role)
 *   **Request Body**:
     ```json
     {
@@ -156,7 +197,7 @@ Returned when validation fails, permissions are lacking, or resources are missin
 
 ### 2. Update Product
 *   **Path**: `PUT /api/v1/products/:id`
-*   **Headers**: `Authorization: Bearer <token>`
+*   **Headers**: `Authorization: Bearer <token>` (Requires **Admin** role)
 *   **Request Body** (Partial updates supported):
     ```json
     {
@@ -182,7 +223,7 @@ Returned when validation fails, permissions are lacking, or resources are missin
 
 ### 3. Delete Product
 *   **Path**: `DELETE /api/v1/products/:id`
-*   **Headers**: `Authorization: Bearer <token>`
+*   **Headers**: `Authorization: Bearer <token>` (Requires **Admin** role)
 *   **Success Response**: `204 No Content`
 
 ### 4. List Products (Cached)

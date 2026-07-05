@@ -11,8 +11,17 @@ erDiagram
         string name
         string email UK "Indexed"
         string password_hash
+        string role
         timestamp created_at
         timestamp updated_at
+    }
+    refresh_tokens {
+        int id PK
+        int user_id FK "Indexed"
+        string token UK "Indexed"
+        timestamp expires_at
+        timestamp created_at
+        timestamp revoked_at
     }
     categories {
         int id PK
@@ -60,6 +69,7 @@ erDiagram
 
     users ||--|| carts : "has one"
     users ||--o{ orders : "places"
+    users ||--o{ refresh_tokens : "owns"
     categories ||--o{ products : "contains"
     carts ||--o{ cart_items : "contains"
     products ||--o{ cart_items : "added to"
@@ -72,13 +82,14 @@ erDiagram
 ## Table Definitions (DDL)
 
 ### Users
-Stores customer authentication and profile details.
+Stores customer authentication, profile, and authorization details.
 ```sql
 CREATE TABLE users (
     id SERIAL PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
     email VARCHAR(255) UNIQUE NOT NULL,
     password_hash VARCHAR(255) NOT NULL,
+    role VARCHAR(50) NOT NULL DEFAULT 'customer',
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
@@ -152,4 +163,18 @@ CREATE TABLE order_items (
     price_at_purchase INTEGER NOT NULL CHECK (price_at_purchase > 0) -- Stored in cents
 );
 CREATE INDEX idx_order_items_order_id ON order_items(order_id);
+```
+
+### Refresh Tokens
+Stores active refresh tokens for JWT session rotation.
+```sql
+CREATE TABLE refresh_tokens (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    token VARCHAR(255) NOT NULL UNIQUE,
+    expires_at TIMESTAMP WITH TIME ZONE NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    revoked_at TIMESTAMP WITH TIME ZONE
+);
+CREATE INDEX idx_refresh_tokens_token ON refresh_tokens(token);
 ```
