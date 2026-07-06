@@ -2,10 +2,10 @@ package worker
 
 import (
 	"context"
-	"log"
 	"sync"
 	"time"
 
+	"github.com/rs/zerolog/log"
 	"shopflow/internal/models"
 	"shopflow/internal/repository"
 )
@@ -42,7 +42,7 @@ func (p *OrderProcessor) Start(ctx context.Context) {
 	// 2. Start dispatcher loop
 	go p.dispatcher(ctx)
 
-	log.Printf("Order processor background workers started successfully (workers: %d)", p.numWorkers)
+	log.Info().Int("workers", p.numWorkers).Msg("Order processor background workers started successfully")
 }
 
 // Stop shuts down dispatcher, closes job queue, and awaits active worker cleanups.
@@ -51,7 +51,7 @@ func (p *OrderProcessor) Stop() {
 	<-p.dispatcherDone
 	close(p.jobChan)
 	p.wg.Wait()
-	log.Println("Order processor background workers stopped gracefully.")
+	log.Info().Msg("Order processor background workers stopped gracefully")
 }
 
 // Dispatcher Polling for pending orders and enqueue job to process
@@ -64,11 +64,11 @@ func (p *OrderProcessor) dispatcher(ctx context.Context) {
 	for {
 		select {
 		case <-ctx.Done():
-			log.Println("[DISPATCHER] Context cancelled. Stopping dispatcher...")
+			log.Info().Msg("[DISPATCHER] Context cancelled. Stopping dispatcher...")
 			return
 
 		case <-p.stopChan:
-			log.Println("[DISPATCHER] Stop signal received. Stopping dispatcher...")
+			log.Info().Msg("[DISPATCHER] Stop signal received. Stopping dispatcher...")
 			return
 
 		case <-ticker.C:
@@ -77,24 +77,24 @@ func (p *OrderProcessor) dispatcher(ctx context.Context) {
 			// (e.g. status=PENDING and created_at older than 10 seconds).
 			pendingOrders, err := p.orderRepo.ListPendingOrders(ctx)
 			if err != nil {
-				log.Printf("[DISPATCHER] Error fetching pending orders: %v", err)
+				log.Error().Err(err).Msg("[DISPATCHER] Error fetching pending orders")
 				continue
 			}
 
 			if len(pendingOrders) == 0 {
-				log.Println("[DISPATCHER] No pending orders found.")
+				log.Debug().Msg("[DISPATCHER] No pending orders found.")
 				continue
 			}
 
-			log.Printf("[DISPATCHER] Found %d pending orders", len(pendingOrders))
+			log.Info().Int("count", len(pendingOrders)).Msg("[DISPATCHER] Found pending orders")
 
 			for _, order := range pendingOrders {
 				select {
 				case p.jobChan <- order.ID:
-					log.Printf("[DISPATCHER] Enqueued Order #%d", order.ID)
+					log.Info().Int("order_id", order.ID).Msg("[DISPATCHER] Enqueued Order")
 
 				default:
-					log.Printf("[DISPATCHER] Job queue full. Skipping Order #%d", order.ID)
+					log.Warn().Int("order_id", order.ID).Msg("[DISPATCHER] Job queue full. Skipping Order")
 				}
 			}
 		}
@@ -110,7 +110,7 @@ func (p *OrderProcessor) worker(ctx context.Context, workerID int) {
 		case <-ctx.Done():
 			return
 		default:
-			log.Printf("[WORKER %d] Processing order ID %d: PENDING -> IN_PROGRESS...", workerID, orderID)
+			log.Info().Int("worker_id", workerID).Int("order_id", orderID).Msg("[WORKER] Processing order ID: PENDING -> IN_PROGRESS...")
 
 			// Simulate processing work/delay
 			time.Sleep(5 * time.Second)
@@ -118,11 +118,11 @@ func (p *OrderProcessor) worker(ctx context.Context, workerID int) {
 			// Transition status in DB
 			err := p.orderRepo.UpdateOrderStatus(ctx, orderID, models.StatusPending, models.StatusProcessing)
 			if err != nil {
-				log.Printf("[WORKER %d] Failed to transition order ID %d: %v", workerID, orderID, err)
+				log.Error().Err(err).Int("worker_id", workerID).Int("order_id", orderID).Msg("[WORKER] Failed to transition order ID")
 				continue
 			}
 
-			log.Printf("[WORKER %d] Successfully updated status for order ID %d", workerID, orderID)
+			log.Info().Int("worker_id", workerID).Int("order_id", orderID).Msg("[WORKER] Successfully updated status for order ID")
 		}
 	}
 }

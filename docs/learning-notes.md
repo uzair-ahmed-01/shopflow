@@ -75,6 +75,25 @@ router.Handle("POST /api/v1/products", authMiddleware(adminMiddleware(http.Handl
   2. `RequireRole("admin")` retrieves `AuthUser` from context, reads the role, and returns `403 Forbidden` if role constraints are not met.
   3. Target handler executes safely.
 
+## Structured Logging with Zerolog
+
+### 1. Plain Text vs. Structured Logging
+- **Plain Text Logging (`log.Printf`)**: Hard to parse or query. Good for human reading in development, bad for machines/aggregators in production.
+- **Structured Logging (`zerolog`)**: Prints key-value logs formatted as JSON. Allows log aggregators (ELK, CloudWatch, Datadog) to instantly search, filter, and alert based on attributes (e.g. status code, execution duration).
+
+### 2. Capturing Response Status Codes in Go Middleware
+Go's standard `http.ResponseWriter` interface does not expose a method to read the HTTP status code after it has been written. To log response status codes:
+- We create a custom `responseWriter` wrapper struct that implements `http.ResponseWriter`.
+- We override the `WriteHeader(code int)` method to save the status code to a field before delegating to the original response writer.
+- This allows our logging middleware to inspect the status code *after* downstream handlers have executed.
+
+### 3. Zerolog Contextual Logging
+- Logging context fields:
+  ```go
+  log.Info().Str("method", r.Method).Int("status", statusCode).Msg("HTTP Request")
+  ```
+- This guarantees structured fields are indexed separately from the human-readable text message, providing powerful log search capabilities.
+
 ## Redis Caching
 
 - TBD

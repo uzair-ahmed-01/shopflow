@@ -22,6 +22,7 @@ This document outlines the milestones and timeline of ShopFlow.
 
 - [x] Worker pool execution for background order status transitions (PENDING -> PROCESSING)
 - [x] Graceful worker shutdowns and cancellation context
+- [x] Structured request logging & background workers instrumentation using Zerolog
 
 ## Phase 4: Containerization & Deployment
 

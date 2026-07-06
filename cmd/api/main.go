@@ -4,12 +4,14 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log"
 	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
+
+	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
 
 	"shopflow/internal/config"
 	"shopflow/internal/db"
@@ -22,23 +24,27 @@ import (
 )
 
 func main() {
-	log.Println("ShopFlow API server starting...")
+	// Configure zerolog global configurations
+	zerolog.TimeFieldFormat = zerolog.TimeFormatUnix
+	log.Logger = log.Output(os.Stdout)
+
+	log.Info().Msg("ShopFlow API server starting...")
 
 	// 1. Load configuration
 	cfg, err := config.LoadConfig()
 	if err != nil {
-		log.Fatalf("Failed to load configuration: %v", err)
+		log.Fatal().Err(err).Msg("Failed to load configuration")
 	}
 
 	// 2. Establish database connection pool
 	dbPool, err := db.NewConnectionPool(cfg)
 	if err != nil {
-		log.Fatalf("Failed to connect to database: %v", err)
+		log.Fatal().Err(err).Msg("Failed to connect to database")
 	}
 	defer func() {
-		log.Println("Closing database connection pool...")
+		log.Info().Msg("Closing database connection pool...")
 		if err := dbPool.Close(); err != nil {
-			log.Printf("Error closing database: %v", err)
+			log.Error().Err(err).Msg("Error closing database connection pool")
 		}
 	}()
 
@@ -110,11 +116,11 @@ func main() {
 		_, _ = w.Write([]byte(`{"success":true,"status":"healthy"}`))
 	})
 
-	// 5. Configure HTTP server
+	// 5. Configure HTTP server with RequestLoggerMiddleware
 	serverAddr := fmt.Sprintf(":%s", cfg.Port)
 	server := &http.Server{
 		Addr:    serverAddr,
-		Handler: router,
+		Handler: middleware.RequestLoggerMiddleware(router),
 	}
 
 	// 6. Graceful shutdown
@@ -123,7 +129,7 @@ func main() {
 
 	serverErr := make(chan error, 1)
 	go func() {
-		log.Printf("Server listening on %s...", serverAddr)
+		log.Info().Msgf("Server listening on %s...", serverAddr)
 		if err := server.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 			serverErr <- err
 		}
@@ -132,12 +138,12 @@ func main() {
 	// Wait for shutdown signal or server error
 	select {
 	case err := <-serverErr:
-		log.Fatalf("Server error: %v", err)
+		log.Fatal().Err(err).Msg("Server error")
 	case sig := <-shutdownChan:
-		log.Printf("Received signal %v, shutting down server...", sig)
+		log.Info().Msgf("Received signal %v, shutting down server...", sig)
 
 		// Stop background processor first to stop dispatching new jobs
-		log.Println("Stopping background order processor...")
+		log.Info().Msg("Stopping background order processor...")
 		cancelProcessor()
 		orderProcessor.Stop()
 
@@ -146,8 +152,8 @@ func main() {
 		defer cancel()
 
 		if err := server.Shutdown(ctx); err != nil {
-			log.Fatalf("Server shutdown failed: %v", err)
+			log.Fatal().Err(err).Msg("Server shutdown failed")
 		}
-		log.Println("Server gracefully stopped.")
+		log.Info().Msg("Server gracefully stopped.")
 	}
 }

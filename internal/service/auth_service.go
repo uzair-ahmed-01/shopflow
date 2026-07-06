@@ -10,18 +10,19 @@ import (
 	"strings"
 	"time"
 
-	"github.com/golang-jwt/jwt/v5"
-	"golang.org/x/crypto/bcrypt"
 	"shopflow/internal/config"
 	"shopflow/internal/models"
 	"shopflow/internal/repository"
+
+	"github.com/golang-jwt/jwt/v5"
+	"golang.org/x/crypto/bcrypt"
 )
 
 // AuthService defines authentication business operations.
 type AuthService interface {
-	Register(ctx context.Context, name, email, password string) (*models.User, error)
+	Register(ctx context.Context, name, email, password, role string) (*models.User, error)
 	Login(ctx context.Context, email, password string) (string, string, error) // Returns access_token, refresh_token, error
-	RefreshToken(ctx context.Context, token string) (string, string, error)     // Returns new_access_token, new_refresh_token, error
+	RefreshToken(ctx context.Context, token string) (string, string, error)    // Returns new_access_token, new_refresh_token, error
 	Logout(ctx context.Context, token string) error
 }
 
@@ -39,9 +40,13 @@ func NewAuthService(repo repository.UserRepository, cfg *config.Config) AuthServ
 }
 
 // Register validates, hashes password, and persists a new user.
-func (s *authService) Register(ctx context.Context, name, email, password string) (*models.User, error) {
+func (s *authService) Register(ctx context.Context, name, email, password, role string) (*models.User, error) {
 	name = strings.TrimSpace(name)
 	email = strings.TrimSpace(email)
+	role = strings.TrimSpace(role)
+	if role == "" {
+		role = models.RoleCustomer
+	}
 
 	// Validations
 	if name == "" || len(name) < 2 || len(name) > 100 {
@@ -64,7 +69,7 @@ func (s *authService) Register(ctx context.Context, name, email, password string
 		Name:         name,
 		Email:        email,
 		PasswordHash: string(hashedPassword),
-		Role:         models.RoleCustomer,
+		Role:         role,
 	}
 
 	if err := s.repo.CreateUser(ctx, user); err != nil {

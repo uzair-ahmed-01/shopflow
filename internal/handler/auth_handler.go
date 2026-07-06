@@ -24,6 +24,7 @@ type registerRequest struct {
 	Name     string `json:"name"`
 	Email    string `json:"email"`
 	Password string `json:"password"`
+	Role     string `json:"role"`
 }
 
 type loginRequest struct {
@@ -42,7 +43,7 @@ func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user, err := h.authService.Register(r.Context(), req.Name, req.Email, req.Password)
+	user, err := h.authService.Register(r.Context(), req.Name, req.Email, req.Password, req.Role)
 	if err != nil {
 		if errors.Is(err, models.ErrInvalidInput) {
 			SendError(w, http.StatusBadRequest, err.Error(), "BAD_REQUEST")
