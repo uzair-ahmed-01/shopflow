@@ -52,7 +52,7 @@ func (h *CartHandler) AddOrUpdateItem(w http.ResponseWriter, r *http.Request) {
 			SendError(w, http.StatusConflict, err.Error(), "INSUFFICIENT_STOCK")
 			return
 		}
-		SendError(w, http.StatusInternalServerError, "failed to update cart item", "INTERNAL_SERVER_ERROR")
+		SendError(w, http.StatusInternalServerError, "failed to update cart item", "INTERNAL_SERVER_ERROR", err)
 		return
 	}
 
@@ -69,7 +69,7 @@ func (h *CartHandler) ViewCart(w http.ResponseWriter, r *http.Request) {
 
 	cart, err := h.service.GetOrCreateCart(r.Context(), userID)
 	if err != nil {
-		SendError(w, http.StatusInternalServerError, "failed to get cart", "INTERNAL_SERVER_ERROR")
+		SendError(w, http.StatusInternalServerError, "failed to get cart", "INTERNAL_SERVER_ERROR", err)
 		return
 	}
 
@@ -101,7 +101,7 @@ func (h *CartHandler) RemoveItem(w http.ResponseWriter, r *http.Request) {
 			SendError(w, http.StatusNotFound, "product not found in cart", "PRODUCT_NOT_FOUND")
 			return
 		}
-		SendError(w, http.StatusInternalServerError, "failed to remove item from cart", "INTERNAL_SERVER_ERROR")
+		SendError(w, http.StatusInternalServerError, "failed to remove item from cart", "INTERNAL_SERVER_ERROR", err)
 		return
 	}
 

@@ -40,7 +40,7 @@ func (h *CategoryHandler) CreateCategory(w http.ResponseWriter, r *http.Request)
 			SendError(w, http.StatusConflict, err.Error(), "CATEGORY_ALREADY_EXISTS")
 			return
 		}
-		SendError(w, http.StatusInternalServerError, "failed to create category", "INTERNAL_SERVER_ERROR")
+		SendError(w, http.StatusInternalServerError, "failed to create category", "INTERNAL_SERVER_ERROR", err)
 		return
 	}
 
@@ -51,7 +51,7 @@ func (h *CategoryHandler) CreateCategory(w http.ResponseWriter, r *http.Request)
 func (h *CategoryHandler) ListCategories(w http.ResponseWriter, r *http.Request) {
 	categories, err := h.service.ListCategories(r.Context())
 	if err != nil {
-		SendError(w, http.StatusInternalServerError, "failed to list categories", "INTERNAL_SERVER_ERROR")
+		SendError(w, http.StatusInternalServerError, "failed to list categories", "INTERNAL_SERVER_ERROR", err)
 		return
 	}
 

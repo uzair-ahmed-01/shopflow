@@ -48,7 +48,7 @@ func (h *ProductHandler) CreateProduct(w http.ResponseWriter, r *http.Request) {
 			SendError(w, http.StatusBadRequest, err.Error(), "BAD_REQUEST")
 			return
 		}
-		SendError(w, http.StatusInternalServerError, "failed to create product", "INTERNAL_SERVER_ERROR")
+		SendError(w, http.StatusInternalServerError, "failed to create product", "INTERNAL_SERVER_ERROR", err)
 		return
 	}
 
@@ -79,7 +79,7 @@ func (h *ProductHandler) UpdateProduct(w http.ResponseWriter, r *http.Request) {
 			SendError(w, http.StatusNotFound, err.Error(), "PRODUCT_NOT_FOUND")
 			return
 		}
-		SendError(w, http.StatusInternalServerError, "failed to update product", "INTERNAL_SERVER_ERROR")
+		SendError(w, http.StatusInternalServerError, "failed to update product", "INTERNAL_SERVER_ERROR", err)
 		return
 	}
 
@@ -101,7 +101,7 @@ func (h *ProductHandler) DeleteProduct(w http.ResponseWriter, r *http.Request) {
 			SendError(w, http.StatusNotFound, err.Error(), "PRODUCT_NOT_FOUND")
 			return
 		}
-		SendError(w, http.StatusInternalServerError, "failed to delete product", "INTERNAL_SERVER_ERROR")
+		SendError(w, http.StatusInternalServerError, "failed to delete product", "INTERNAL_SERVER_ERROR", err)
 		return
 	}
 
@@ -131,7 +131,7 @@ func (h *ProductHandler) ListProducts(w http.ResponseWriter, r *http.Request) {
 
 	products, totalItems, err := h.service.ListProducts(r.Context(), page, limit)
 	if err != nil {
-		SendError(w, http.StatusInternalServerError, "failed to list products", "INTERNAL_SERVER_ERROR")
+		SendError(w, http.StatusInternalServerError, "failed to list products", "INTERNAL_SERVER_ERROR", err)
 		return
 	}
 

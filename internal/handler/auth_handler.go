@@ -53,7 +53,7 @@ func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 			SendError(w, http.StatusConflict, err.Error(), "EMAIL_ALREADY_EXISTS")
 			return
 		}
-		SendError(w, http.StatusInternalServerError, "failed to register user", "INTERNAL_SERVER_ERROR")
+		SendError(w, http.StatusInternalServerError, "failed to register user", "INTERNAL_SERVER_ERROR", err)
 		return
 	}
 
@@ -80,7 +80,7 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 			SendError(w, http.StatusUnauthorized, err.Error(), "UNAUTHORIZED")
 			return
 		}
-		SendError(w, http.StatusInternalServerError, "failed to authenticate", "INTERNAL_SERVER_ERROR")
+		SendError(w, http.StatusInternalServerError, "failed to authenticate", "INTERNAL_SERVER_ERROR", err)
 		return
 	}
 
@@ -111,7 +111,7 @@ func (h *AuthHandler) Refresh(w http.ResponseWriter, r *http.Request) {
 			SendError(w, http.StatusBadRequest, err.Error(), "INVALID_TOKEN")
 			return
 		}
-		SendError(w, http.StatusInternalServerError, "failed to refresh token", "INTERNAL_SERVER_ERROR")
+		SendError(w, http.StatusInternalServerError, "failed to refresh token", "INTERNAL_SERVER_ERROR", err)
 		return
 	}
 
@@ -142,7 +142,7 @@ func (h *AuthHandler) Logout(w http.ResponseWriter, r *http.Request) {
 			SendError(w, http.StatusBadRequest, err.Error(), "INVALID_TOKEN")
 			return
 		}
-		SendError(w, http.StatusInternalServerError, "failed to logout", "INTERNAL_SERVER_ERROR")
+		SendError(w, http.StatusInternalServerError, "failed to logout", "INTERNAL_SERVER_ERROR", err)
 		return
 	}
 

@@ -94,6 +94,12 @@ Go's standard `http.ResponseWriter` interface does not expose a method to read t
   ```
 - This guarantees structured fields are indexed separately from the human-readable text message, providing powerful log search capabilities.
 
+### 4. Centralized Error Logging with Variadic Parameter (`errs ...error`)
+To avoid manually injecting `log.Error()` boilerplate across 50 handler locations, we handle structured error logging centrally:
+- **Centralized Wrapper**: We modified the `SendError` response helper inside `response.go` to accept a variadic `errs ...error` parameter.
+- **Backward Compatibility**: Using a variadic parameter ensures that existing `SendError` calls with 4 parameters continue to compile and work flawlessly without code modification.
+- **Diagnostics Separation**: When a handler detects an internal system/database failure (status 500), it passes the raw database error to `SendError(..., err)`. The helper logs the original raw error to Zerolog for diagnostics, while responding to the client with a generic, safe error response string to prevent internal details leak.
+
 ## Redis Caching
 
 - TBD

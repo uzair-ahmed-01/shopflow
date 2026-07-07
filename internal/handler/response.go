@@ -3,6 +3,8 @@ package handler
 import (
 	"encoding/json"
 	"net/http"
+
+	"github.com/rs/zerolog/log"
 )
 
 // SendJSON sends a success envelope JSON response.
@@ -15,8 +17,14 @@ func SendJSON(w http.ResponseWriter, status int, data any) {
 	})
 }
 
-// SendError sends an error envelope JSON response.
-func SendError(w http.ResponseWriter, status int, message string, code string) {
+// SendError sends an error envelope JSON response and logs internal errors.
+func SendError(w http.ResponseWriter, status int, message string, code string, errs ...error) {
+	if len(errs) > 0 && errs[0] != nil {
+		log.Error().Err(errs[0]).Str("code", code).Int("status", status).Msg(message)
+	} else if status >= 500 {
+		log.Error().Str("code", code).Int("status", status).Msg(message)
+	}
+
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
 	_ = json.NewEncoder(w).Encode(map[string]any{

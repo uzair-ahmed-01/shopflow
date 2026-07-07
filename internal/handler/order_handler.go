@@ -42,7 +42,7 @@ func (h *OrderHandler) PlaceOrder(w http.ResponseWriter, r *http.Request) {
 			SendError(w, http.StatusBadRequest, "cart not found", "CART_NOT_FOUND")
 			return
 		}
-		SendError(w, http.StatusInternalServerError, "failed to place order", "INTERNAL_SERVER_ERROR")
+		SendError(w, http.StatusInternalServerError, "failed to place order", "INTERNAL_SERVER_ERROR", err)
 		return
 	}
 
@@ -59,7 +59,7 @@ func (h *OrderHandler) ListOrders(w http.ResponseWriter, r *http.Request) {
 
 	orders, err := h.service.ListOrders(r.Context(), userID)
 	if err != nil {
-		SendError(w, http.StatusInternalServerError, "failed to list orders", "INTERNAL_SERVER_ERROR")
+		SendError(w, http.StatusInternalServerError, "failed to list orders", "INTERNAL_SERVER_ERROR", err)
 		return
 	}
 
@@ -91,7 +91,7 @@ func (h *OrderHandler) GetOrder(w http.ResponseWriter, r *http.Request) {
 			SendError(w, http.StatusNotFound, err.Error(), "ORDER_NOT_FOUND")
 			return
 		}
-		SendError(w, http.StatusInternalServerError, "failed to get order details", "INTERNAL_SERVER_ERROR")
+		SendError(w, http.StatusInternalServerError, "failed to get order details", "INTERNAL_SERVER_ERROR", err)
 		return
 	}
 
