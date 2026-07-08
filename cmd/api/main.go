@@ -82,38 +82,14 @@ func main() {
 
 	// 4. Set up router and routes
 	router := http.NewServeMux()
-
-	// Registeration and Login routes
-	router.HandleFunc("POST /api/v1/auth/register", authHandler.Register)
-	router.HandleFunc("POST /api/v1/auth/login", authHandler.Login)
-	router.HandleFunc("POST /api/v1/auth/refresh", authHandler.Refresh)
-	router.HandleFunc("POST /api/v1/auth/logout", authHandler.Logout)
-
-	// Category routes
-	router.HandleFunc("GET /api/v1/categories", categoryHandler.ListCategories)
-	router.Handle("POST /api/v1/categories", authMiddleware(adminMiddleware(http.HandlerFunc(categoryHandler.CreateCategory))))
-
-	// Product routes
-	router.HandleFunc("GET /api/v1/products", productHandler.ListProducts)
-	router.Handle("POST /api/v1/products", authMiddleware(adminMiddleware(http.HandlerFunc(productHandler.CreateProduct))))
-	router.Handle("PUT /api/v1/products/{id}", authMiddleware(adminMiddleware(http.HandlerFunc(productHandler.UpdateProduct))))
-	router.Handle("DELETE /api/v1/products/{id}", authMiddleware(adminMiddleware(http.HandlerFunc(productHandler.DeleteProduct))))
-
-	// Cart routes
-	router.Handle("POST /api/v1/cart/items", authMiddleware(http.HandlerFunc(cartHandler.AddOrUpdateItem)))
-	router.Handle("GET /api/v1/cart", authMiddleware(http.HandlerFunc(cartHandler.ViewCart)))
-	router.Handle("DELETE /api/v1/cart/items/{productId}", authMiddleware(http.HandlerFunc(cartHandler.RemoveItem)))
-
-	// Order routes
-	router.Handle("POST /api/v1/orders", authMiddleware(http.HandlerFunc(orderHandler.PlaceOrder)))
-	router.Handle("GET /api/v1/orders", authMiddleware(http.HandlerFunc(orderHandler.ListOrders)))
-	router.Handle("GET /api/v1/orders/{id}", authMiddleware(http.HandlerFunc(orderHandler.GetOrder)))
-
-	// Root/healthcheck handler
-	router.HandleFunc("GET /api/v1/health", func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusOK)
-		_, _ = w.Write([]byte(`{"success":true,"status":"healthy"}`))
+	handler.RegisterRoutes(router, handler.RouterConfig{
+		AuthHandler:     authHandler,
+		CategoryHandler: categoryHandler,
+		ProductHandler:  productHandler,
+		CartHandler:     cartHandler,
+		OrderHandler:    orderHandler,
+		AuthMiddleware:  authMiddleware,
+		AdminMiddleware: adminMiddleware,
 	})
 
 	// 5. Configure HTTP server with RequestLoggerMiddleware

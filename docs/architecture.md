@@ -32,13 +32,13 @@ ShopFlow uses standard Clean Architecture:
 
 ## Directory Mapping
 
-- `/cmd/api/main.go`: Application entrypoint. Sets up dependency injection, database connection, Redis client, routes, and starts HTTP server.
+- `/cmd/api/main.go`: Application entrypoint. Bootstrap database connection pool, starts background workers, initializes dependency injection, and starts HTTP server. Delegates API routing mapping to `internal/handler/routes.go`.
 - `/migrations/`: SQL migration files for database schema versioning.
 - `/internal/`: Contains core layers and database entities:
   - `/internal/models/`: Shared domain model structs (User, Product, Category, etc.).
   - `/internal/repository/`: Shared database repositories (UserRepository, etc.).
   - `/internal/service/`: Business logic services (AuthService, etc.).
-  - `/internal/handler/`: HTTP handlers (AuthHandler, etc.) for REST API endpoints.
+  - `/internal/handler/`: HTTP handlers (AuthHandler, etc.) and `routes.go` defining REST API endpoint patterns and middleware chain bindings.
 - `/internal/db/`: DB connection pools, migrations, helper functions.
 - `/internal/middleware/`: JWT authentication validation, logging, recover middlewares.
 - `/internal/cache/`: Redis client and caching wrappers.
