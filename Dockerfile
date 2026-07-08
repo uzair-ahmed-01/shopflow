@@ -10,19 +10,21 @@ COPY go.mod ./
 # Copy source code
 COPY . .
 
-# Build the application binary
-RUN CGO_ENABLED=0 GOOS=linux go build -o main ./cmd/api/main.go
+# Build the application binaries
+RUN CGO_ENABLED=0 GOOS=linux go build -o api ./cmd/api/main.go
+RUN CGO_ENABLED=0 GOOS=linux go build -o worker ./cmd/worker/main.go
 
 # Production stage
 FROM alpine:3.19 AS runner
 
 WORKDIR /app
 
-# Copy binary from build stage
-COPY --from=builder /app/main .
+# Copy binaries from build stage
+COPY --from=builder /app/api .
+COPY --from=builder /app/worker .
 # Copy migration files for runtime migrations
 COPY --from=builder /app/migrations ./migrations
 
 EXPOSE 8080
 
-CMD ["./main"]
+CMD ["./api"]
