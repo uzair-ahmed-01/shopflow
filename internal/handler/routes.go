@@ -20,8 +20,8 @@ func RegisterRoutes(mux *http.ServeMux, cfg RouterConfig) {
 	// Registration and Login routes
 	mux.HandleFunc("POST /api/v1/auth/register", cfg.AuthHandler.Register)
 	mux.HandleFunc("POST /api/v1/auth/login", cfg.AuthHandler.Login)
-	mux.HandleFunc("POST /api/v1/auth/refresh", cfg.AuthHandler.Refresh)
-	mux.HandleFunc("POST /api/v1/auth/logout", cfg.AuthHandler.Logout)
+	mux.Handle("POST /api/v1/auth/refresh", cfg.AuthMiddleware(http.HandlerFunc(cfg.AuthHandler.Refresh)))
+	mux.Handle("POST /api/v1/auth/logout", cfg.AuthMiddleware(http.HandlerFunc(cfg.AuthHandler.Logout)))
 
 	// Category routes
 	mux.HandleFunc("GET /api/v1/categories", cfg.CategoryHandler.ListCategories)
