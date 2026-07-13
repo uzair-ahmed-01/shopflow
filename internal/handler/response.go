@@ -52,3 +52,22 @@ func DecodeJSON[T any](w http.ResponseWriter, r *http.Request) (T, bool) {
 	}
 	return val, true
 }
+
+// SuccessResponse represents a generic success response envelope for Swagger.
+type SuccessResponse[T any] struct {
+	Success bool `json:"success" example:"true"`
+	Data    T    `json:"data"`
+}
+
+// ErrorDetail represents the details of an error.
+type ErrorDetail struct {
+	Message string `json:"message"`
+	Code    string `json:"code"`
+}
+
+// ErrorResponse represents a generic error response envelope.
+type ErrorResponse struct {
+	Success bool        `json:"success" example:"false"`
+	Error   ErrorDetail `json:"error"`
+}
+

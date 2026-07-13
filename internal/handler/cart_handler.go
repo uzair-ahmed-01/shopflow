@@ -25,7 +25,25 @@ type addCartItemRequest struct {
 	Quantity  int `json:"quantity"`
 }
 
+type updateCartResponse struct {
+	Message string `json:"message" example:"cart item updated successfully"`
+}
+
 // AddOrUpdateItem handles POST /api/v1/cart/items.
+// @Summary Add or update item in cart
+// @Description Add a product to the user's shopping cart or update its quantity. Authenticated.
+// @Tags Cart
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param body body addCartItemRequest true "Cart item details"
+// @Success 200 {object} SuccessResponse[updateCartResponse] "Item added/updated successfully"
+// @Failure 400 {object} ErrorResponse "Invalid input data"
+// @Failure 401 {object} ErrorResponse "Unauthorized"
+// @Failure 404 {object} ErrorResponse "Product not found"
+// @Failure 409 {object} ErrorResponse "Insufficient stock"
+// @Failure 500 {object} ErrorResponse "Internal server error"
+// @Router /api/v1/cart/items [post]
 func (h *CartHandler) AddOrUpdateItem(w http.ResponseWriter, r *http.Request) {
 	userID, ok := middleware.GetUserIDFromContext(r.Context())
 	if !ok {
@@ -60,6 +78,15 @@ func (h *CartHandler) AddOrUpdateItem(w http.ResponseWriter, r *http.Request) {
 }
 
 // ViewCart handles GET /api/v1/cart.
+// @Summary View shopping cart
+// @Description Retrieve the authenticated user's active shopping cart. Authenticated.
+// @Tags Cart
+// @Produce json
+// @Security BearerAuth
+// @Success 200 {object} SuccessResponse[models.Cart] "Cart details retrieved successfully"
+// @Failure 401 {object} ErrorResponse "Unauthorized"
+// @Failure 500 {object} ErrorResponse "Internal server error"
+// @Router /api/v1/cart [get]
 func (h *CartHandler) ViewCart(w http.ResponseWriter, r *http.Request) {
 	userID, ok := middleware.GetUserIDFromContext(r.Context())
 	if !ok {
@@ -77,6 +104,18 @@ func (h *CartHandler) ViewCart(w http.ResponseWriter, r *http.Request) {
 }
 
 // RemoveItem handles DELETE /api/v1/cart/items/{productId}.
+// @Summary Remove item from cart
+// @Description Remove a product from the user's shopping cart completely. Authenticated.
+// @Tags Cart
+// @Produce json
+// @Security BearerAuth
+// @Param productId path int true "Product ID"
+// @Success 204 "No Content"
+// @Failure 400 {object} ErrorResponse "Invalid product ID"
+// @Failure 401 {object} ErrorResponse "Unauthorized"
+// @Failure 404 {object} ErrorResponse "Cart or product not found in cart"
+// @Failure 500 {object} ErrorResponse "Internal server error"
+// @Router /api/v1/cart/items/{productId} [delete]
 func (h *CartHandler) RemoveItem(w http.ResponseWriter, r *http.Request) {
 	userID, ok := middleware.GetUserIDFromContext(r.Context())
 	if !ok {

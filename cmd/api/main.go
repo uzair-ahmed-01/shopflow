@@ -20,8 +20,20 @@ import (
 	"shopflow/internal/models"
 	"shopflow/internal/repository"
 	"shopflow/internal/service"
+
+	_ "shopflow/docs"
 )
 
+// @title ShopFlow API
+// @version 1.0
+// @description ShopFlow modern backend engineering showcase API in Go.
+// @host localhost:8080
+// @BasePath /
+
+// @securityDefinitions.apikey BearerAuth
+// @in header
+// @name Authorization
+// @description Type "Bearer <your-jwt-token>" to authenticate.
 func main() {
 	// Configure zerolog global configurations
 	zerolog.TimeFieldFormat = zerolog.TimeFormatUnix

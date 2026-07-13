@@ -21,6 +21,17 @@ func NewOrderHandler(service service.OrderService) *OrderHandler {
 }
 
 // PlaceOrder handles POST /api/v1/orders.
+// @Summary Place order
+// @Description Convert current active cart items into a purchase order. Authenticated.
+// @Tags Order
+// @Produce json
+// @Security BearerAuth
+// @Success 201 {object} SuccessResponse[models.Order] "Order placed successfully"
+// @Failure 400 {object} ErrorResponse "Cart empty or invalid data"
+// @Failure 401 {object} ErrorResponse "Unauthorized"
+// @Failure 409 {object} ErrorResponse "Insufficient stock"
+// @Failure 500 {object} ErrorResponse "Internal server error"
+// @Router /api/v1/orders [post]
 func (h *OrderHandler) PlaceOrder(w http.ResponseWriter, r *http.Request) {
 	userID, ok := middleware.GetUserIDFromContext(r.Context())
 	if !ok {
@@ -50,6 +61,15 @@ func (h *OrderHandler) PlaceOrder(w http.ResponseWriter, r *http.Request) {
 }
 
 // ListOrders handles GET /api/v1/orders.
+// @Summary List orders
+// @Description Retrieve history of orders placed by the authenticated user. Authenticated.
+// @Tags Order
+// @Produce json
+// @Security BearerAuth
+// @Success 200 {object} SuccessResponse[[]models.Order] "Orders retrieved successfully"
+// @Failure 401 {object} ErrorResponse "Unauthorized"
+// @Failure 500 {object} ErrorResponse "Internal server error"
+// @Router /api/v1/orders [get]
 func (h *OrderHandler) ListOrders(w http.ResponseWriter, r *http.Request) {
 	userID, ok := middleware.GetUserIDFromContext(r.Context())
 	if !ok {
@@ -71,6 +91,18 @@ func (h *OrderHandler) ListOrders(w http.ResponseWriter, r *http.Request) {
 }
 
 // GetOrder handles GET /api/v1/orders/{id}.
+// @Summary Get order details
+// @Description Retrieve full details of a specific order by ID. Authenticated.
+// @Tags Order
+// @Produce json
+// @Security BearerAuth
+// @Param id path int true "Order ID"
+// @Success 200 {object} SuccessResponse[models.Order] "Order details retrieved successfully"
+// @Failure 400 {object} ErrorResponse "Invalid order ID"
+// @Failure 401 {object} ErrorResponse "Unauthorized"
+// @Failure 404 {object} ErrorResponse "Order not found"
+// @Failure 500 {object} ErrorResponse "Internal server error"
+// @Router /api/v1/orders/{id} [get]
 func (h *OrderHandler) GetOrder(w http.ResponseWriter, r *http.Request) {
 	userID, ok := middleware.GetUserIDFromContext(r.Context())
 	if !ok {

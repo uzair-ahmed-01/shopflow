@@ -2,6 +2,8 @@ package handler
 
 import (
 	"net/http"
+
+	httpSwagger "github.com/swaggo/http-swagger"
 )
 
 // RouterConfig gathers handler dependencies and authorization middlewares.
@@ -42,6 +44,11 @@ func RegisterRoutes(mux *http.ServeMux, cfg RouterConfig) {
 	mux.Handle("POST /api/v1/orders", cfg.AuthMiddleware(http.HandlerFunc(cfg.OrderHandler.PlaceOrder)))
 	mux.Handle("GET /api/v1/orders", cfg.AuthMiddleware(http.HandlerFunc(cfg.OrderHandler.ListOrders)))
 	mux.Handle("GET /api/v1/orders/{id}", cfg.AuthMiddleware(http.HandlerFunc(cfg.OrderHandler.GetOrder)))
+
+	// Swagger route
+	mux.Handle("GET /swagger/", httpSwagger.Handler(
+		httpSwagger.URL("/swagger/doc.json"),
+	))
 
 	// Root/healthcheck handler
 	mux.HandleFunc("GET /api/v1/health", func(w http.ResponseWriter, r *http.Request) {

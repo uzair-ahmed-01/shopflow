@@ -24,6 +24,19 @@ type createCategoryRequest struct {
 }
 
 // CreateCategory handles POST /api/v1/categories.
+// @Summary Create category
+// @Description Create a new product category. Admin only.
+// @Tags Category
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param body body createCategoryRequest true "Category details"
+// @Success 201 {object} SuccessResponse[models.Category] "Category created successfully"
+// @Failure 400 {object} ErrorResponse "Invalid input data"
+// @Failure 401 {object} ErrorResponse "Unauthorized"
+// @Failure 409 {object} ErrorResponse "Category already exists"
+// @Failure 500 {object} ErrorResponse "Internal server error"
+// @Router /api/v1/categories [post]
 func (h *CategoryHandler) CreateCategory(w http.ResponseWriter, r *http.Request) {
 	req, ok := DecodeJSON[createCategoryRequest](w, r)
 	if !ok {
@@ -48,6 +61,13 @@ func (h *CategoryHandler) CreateCategory(w http.ResponseWriter, r *http.Request)
 }
 
 // ListCategories handles GET /api/v1/categories.
+// @Summary List categories
+// @Description Retrieve a list of all product categories. Public.
+// @Tags Category
+// @Produce json
+// @Success 200 {object} SuccessResponse[[]models.Category] "Categories retrieved successfully"
+// @Failure 500 {object} ErrorResponse "Internal server error"
+// @Router /api/v1/categories [get]
 func (h *CategoryHandler) ListCategories(w http.ResponseWriter, r *http.Request) {
 	categories, err := h.service.ListCategories(r.Context())
 	if err != nil {
