@@ -35,6 +35,7 @@ This document outlines the milestones and timeline of ShopFlow.
 - [ ] Integration testing (Repositories)
 - [x] Fill learning-notes.md
 - [x] Create Go concurrency study guide (go-concurrency-guide.md)
+- [x] Swagger/OpenAPI documentation integration (Swagger UI at /swagger/)
 
 ## Phase 6: Future Enhancements & Postponed Modules
 

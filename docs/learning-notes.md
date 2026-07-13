@@ -100,6 +100,17 @@ To avoid manually injecting `log.Error()` boilerplate across 50 handler location
 - **Backward Compatibility**: Using a variadic parameter ensures that existing `SendError` calls with 4 parameters continue to compile and work flawlessly without code modification.
 - **Diagnostics Separation**: When a handler detects an internal system/database failure (status 500), it passes the raw database error to `SendError(..., err)`. The helper logs the original raw error to Zerolog for diagnostics, while responding to the client with a generic, safe error response string to prevent internal details leak.
 
+## Swagger / OpenAPI Integration
+
+### 1. Declarative Documentation Comments
+We write standard Swagger annotations (`@Summary`, `@Description`, `@Param`, `@Success`, `@Router`, etc.) directly above our HTTP handler methods. This keeps endpoint documentation close to the implementation code, making it easy to keep it updated.
+
+### 2. Handling Enveloped Responses & Go Generics
+Our API responds using a standard wrapper/envelope structure: `SuccessResponse[T]` and `ErrorResponse`.
+- **Parser Limitations**: Older `swag` tool versions (like `v1.8.1`) cannot correctly compile and resolve Go 1.18+ generic type parameters defined in comments.
+- **The Solution**: We upgraded the dependency `github.com/swaggo/swag` to the latest version (`v1.16.6`) and ran `go run github.com/swaggo/swag/cmd/swag@latest` to leverage the modern parser.
+- **Annotating Generics**: In our annotations, we qualify generic parameters with their package path (e.g. `handler.SuccessResponse[models.Category]` or `handler.SuccessResponse[handler.loginResponse]`) so the CLI parser resolves them cleanly.
+
 ## Redis Caching
 
 - TBD

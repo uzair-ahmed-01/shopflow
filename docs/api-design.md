@@ -4,6 +4,11 @@ This document details the REST API endpoints, request payloads, response schemas
 
 All endpoints are prefixed with `/api/v1`.
 
+## Interactive Swagger API Documentation
+An interactive Swagger UI is available to explore and test endpoints in real time:
+- **URL**: `http://localhost:8080/swagger/index.html`
+- **Re-generation**: Run `make swagger-gen` after modifying handler comments to regenerate the documentation specs.
+
 ---
 
 ## Standard JSON Response Formats
